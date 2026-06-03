@@ -520,6 +520,19 @@ button{font-family:inherit;cursor:pointer}
 </style>
 </head>
 <body>
+
+<!-- ═══ فورم Netlify مخفي (يكتشفه Netlify وقت النشر ويُفعّل إشعار الإيميل) ═══ -->
+<form name="orders" netlify netlify-honeypot="bot-field" hidden>
+  <input type="text" name="name">
+  <input type="tel" name="phone">
+  <input type="email" name="email">
+  <input type="text" name="governorate">
+  <input type="text" name="address">
+  <input type="text" name="notes">
+  <input type="text" name="products">
+  <input type="text" name="total">
+  <input type="text" name="bot-field">
+</form>
 <!-- GTM noscript — DISABLED -->
 
 <div class="atmo"><span class="a1"></span><span class="a2"></span><span class="a3"></span></div>
@@ -972,6 +985,19 @@ function submitOrder(){const name=$('coName').value.trim(),phone=$('coPhone').va
   cart.forEach((i,x)=>{m+=`${x+1}. ${i.name} × ${i.qty} = ${fmt(i.price*i.qty)} د.ع\n`;});
   m+=`\n💰 المجموع: ${fmt(sub)} د.ع\n💳 الدفع: عند الاستلام\n\nشكرًا لكم 🌹`;
   lcTrack('InitiateCheckout',{value:sub,currency:'IQD',num_items:cart.reduce((s,i)=>s+i.qty,0),content_ids:cart.map(i=>i.id),content_type:'product'});
+  // حفظ الطلب محلياً للوحة التحكم o.html
+  var prodStr=cart.map(i=>i.name+' ×'+i.qty).join(' | ');
+  var order={id:'ord_'+Date.now(),ts:Date.now(),name:name,phone:lcNormPhone(phone),phoneRaw:phone,email:email,gov:gov,addr:addr,notes:notes,products:prodStr,total:sub,status:'pending'};
+  try{var os=JSON.parse(localStorage.getItem('lc_orders')||'[]');os.unshift(order);localStorage.setItem('lc_orders',JSON.stringify(os));}catch(e){}
+  // إرسال للـ Netlify Form (يُفعّل إشعار الإيميل إلى alinaser93@gmail.com)
+  try{
+    var fd=new URLSearchParams();
+    fd.append('form-name','orders');fd.append('name',name);fd.append('phone',phone);
+    fd.append('email',email||'—');fd.append('governorate',gov);fd.append('address',addr);
+    fd.append('notes',notes||'—');fd.append('products',prodStr);fd.append('total',fmt(sub)+' د.ع');
+    fetch('/',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:fd.toString()}).catch(function(){});
+  }catch(e){}
+  toast('تم تسجيل طلبك ✓ سيتم تأكيده عبر واتساب');
   window.open(`https://wa.me/${WA}?text=${encodeURIComponent(m)}`,'_blank');}
 function buyBundle(name,price){lcTrack('InitiateCheckout',{value:price,currency:'IQD',content_name:name});const m=`السلام عليكم،\nأريد طلب "${name}" من متجر LCARE IQ\nالسعر: ${fmt(price)} د.ع\n\nشكرًا لكم 🌹`;window.open(`https://wa.me/${WA}?text=${encodeURIComponent(m)}`,'_blank');}
 function buyDirect(id){const p=PRODUCTS.find(x=>x.id===id);if(!p)return;lcTrack('InitiateCheckout',{value:p.price,currency:'IQD',content_ids:[p.id],content_name:p.name,content_type:'product'});const m=`السلام عليكم،\nأريد طلب "${p.name}" من متجر LCARE IQ\nالسعر: ${fmt(p.price)} د.ع\n\nشكرًا لكم 🌹`;window.open(`https://wa.me/${WA}?text=${encodeURIComponent(m)}`,'_blank');}
