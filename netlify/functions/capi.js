@@ -68,8 +68,13 @@ exports.handler = async (event) => {
     };
     if (user_data.fbp) ud.fbp = user_data.fbp;
     if (user_data.fbc) ud.fbc = user_data.fbc;
-    if (user_data.em) ud.em = sha256(user_data.em);   // إن توفّر مستقبلاً
-    if (user_data.ph) ud.ph = sha256(user_data.ph);   // إن توفّر مستقبلاً
+    if (user_data.em) ud.em = sha256(user_data.em);
+    if (user_data.ph) ud.ph = sha256(user_data.ph);
+    if (user_data.fn) ud.fn = sha256(user_data.fn);
+    if (user_data.ln) ud.ln = sha256(user_data.ln);
+    if (user_data.ct) ud.ct = sha256(user_data.ct);
+    if (user_data.country) ud.country = sha256(user_data.country);
+    if (user_data.external_id) ud.external_id = sha256(user_data.external_id);
 
     const payload = {
       data: [{
