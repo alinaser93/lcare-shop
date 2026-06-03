@@ -10,16 +10,41 @@
 <meta property="og:description" content="حياة السكري تصبح أسهل مع الأدوات الصحيحة">
 
 <!-- ═══════════════════════════════════════════════════════════
-     التتبع معطّل مؤقتاً (Pixel + GTM)
-     الـ Pixel مربوط على lcareiq.com فقط لحماية بيانات الاشتراك.
-     لإعادة التفعيل لاحقاً: استرجع المحتوى من index-WITH-tracking-backup.html
+     Meta Pixel + Conversions API — متجر LCARE (Pixel ID: 3613882612094743)
+     منفصل تماماً عن pixel العيادة (lcareiq.com).
+     الـ CAPI يعمل عبر Netlify Function ويقرأ التوكن من متغيرات البيئة المحمية.
 ═══════════════════════════════════════════════════════════ -->
-<!-- Google Tag Manager — DISABLED -->
-<!-- Meta Pixel — DISABLED -->
 <script>
-  // Safe stubs so existing event calls don't throw errors while tracking is off
-  window.dataLayer = window.dataLayer || [];
-  window.fbq = window.fbq || function(){};
+!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;
+n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;
+s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script',
+'https://connect.facebook.net/en_US/fbevents.js');
+fbq('init','3613882612094743');
+
+window.dataLayer = window.dataLayer || []; // harmless stub (GTM not used)
+
+/* ── محرّك تتبع موحّد: Pixel + CAPI بنفس event_id لمنع التكرار ── */
+window.LC_CAPI = '/.netlify/functions/capi';
+function lcCookie(n){var m=document.cookie.match(new RegExp('(^| )'+n+'=([^;]+)'));return m?m[2]:undefined;}
+function lcEventId(){return 'lc_'+Date.now()+'_'+Math.random().toString(36).slice(2,11);}
+function lcTrack(name,custom){
+  custom = custom || {};
+  var id = lcEventId();
+  if(window.fbq) fbq('track', name, custom, {eventID:id});      // 1) متصفح
+  try{                                                            // 2) خادم
+    fetch(window.LC_CAPI,{
+      method:'POST', keepalive:true,
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        event_name:name, event_id:id, event_source_url:location.href,
+        custom_data:custom,
+        user_data:{ fbp:lcCookie('_fbp'), fbc:lcCookie('_fbc') }
+      })
+    }).catch(function(){});
+  }catch(e){}
+}
+window.addEventListener('load',function(){setTimeout(function(){lcTrack('PageView',{});},400);});
 </script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -866,7 +891,7 @@ function renderEdu(){$('eduGrid').innerHTML=EDU.map(e=>`<div class="educ" onclic
 function renderReviews(){$('proofGrid').innerHTML=REVIEWS.map((r,i)=>`<div class="review rv d${(i%3)+1}"><div class="stars">★★★★★</div><p>${r.txt}</p><div class="review-by"><div class="review-av">${r.n[0]}</div><div><b>${r.n}</b><span>${r.t}</span></div></div></div>`).join('');}
 
 /* ════ CART ════ */
-function addCart(id){const p=PRODUCTS.find(x=>x.id===id);if(!p)return;const e=cart.find(i=>i.id===id);if(e)e.qty++;else cart.push({id:p.id,name:p.name,catName:p.catName,price:p.price,qty:1});updateCart();toast(`أُضيف "${p.name}" للسلة`);if(window.dataLayer)dataLayer.push({event:'add_to_cart',ecommerce:{currency:'IQD',value:p.price,items:[{item_id:p.id,item_name:p.name,price:p.price,quantity:1}]}});if(window.fbq)fbq('track','AddToCart',{content_ids:[p.id],value:p.price,currency:'IQD'});}
+function addCart(id){const p=PRODUCTS.find(x=>x.id===id);if(!p)return;const e=cart.find(i=>i.id===id);if(e)e.qty++;else cart.push({id:p.id,name:p.name,catName:p.catName,price:p.price,qty:1});updateCart();toast(`أُضيف "${p.name}" للسلة`);lcTrack('AddToCart',{content_ids:[p.id],content_name:p.name,content_type:'product',value:p.price,currency:'IQD'});}
 function rmCart(id){cart=cart.filter(i=>i.id!==id);updateCart();}
 function qtyCart(id,d){const i=cart.find(x=>x.id===id);if(i){i.qty=Math.max(1,i.qty+d);updateCart();}}
 function updateCart(){const count=cart.reduce((s,i)=>s+i.qty,0),sub=cart.reduce((s,i)=>s+i.price*i.qty,0);
@@ -889,11 +914,10 @@ function submitOrder(){const name=$('coName').value.trim(),phone=$('coPhone').va
   if(notes)m+=`📝 ملاحظات: ${notes}\n`;m+=`\n🛒 الطلب:\n`;
   cart.forEach((i,x)=>{m+=`${x+1}. ${i.name} × ${i.qty} = ${fmt(i.price*i.qty)} د.ع\n`;});
   m+=`\n💰 المجموع: ${fmt(sub)} د.ع\n💳 الدفع: عند الاستلام\n\nشكرًا لكم 🌹`;
-  if(window.dataLayer)dataLayer.push({event:'purchase_intent',ecommerce:{currency:'IQD',value:sub,items:cart.map(i=>({item_id:i.id,item_name:i.name,price:i.price,quantity:i.qty}))}});
-  if(window.fbq)fbq('track','Purchase',{value:sub,currency:'IQD'});
+  lcTrack('InitiateCheckout',{value:sub,currency:'IQD',num_items:cart.reduce((s,i)=>s+i.qty,0),content_ids:cart.map(i=>i.id),content_type:'product'});
   window.open(`https://wa.me/${WA}?text=${encodeURIComponent(m)}`,'_blank');}
-function buyBundle(name,price){const m=`السلام عليكم،\nأريد طلب "${name}" من متجر LCARE IQ\nالسعر: ${fmt(price)} د.ع\n\nشكرًا لكم 🌹`;window.open(`https://wa.me/${WA}?text=${encodeURIComponent(m)}`,'_blank');}
-function buyDirect(id){const p=PRODUCTS.find(x=>x.id===id);if(!p)return;const m=`السلام عليكم،\nأريد طلب "${p.name}" من متجر LCARE IQ\nالسعر: ${fmt(p.price)} د.ع\n\nشكرًا لكم 🌹`;window.open(`https://wa.me/${WA}?text=${encodeURIComponent(m)}`,'_blank');}
+function buyBundle(name,price){lcTrack('InitiateCheckout',{value:price,currency:'IQD',content_name:name});const m=`السلام عليكم،\nأريد طلب "${name}" من متجر LCARE IQ\nالسعر: ${fmt(price)} د.ع\n\nشكرًا لكم 🌹`;window.open(`https://wa.me/${WA}?text=${encodeURIComponent(m)}`,'_blank');}
+function buyDirect(id){const p=PRODUCTS.find(x=>x.id===id);if(!p)return;lcTrack('InitiateCheckout',{value:p.price,currency:'IQD',content_ids:[p.id],content_name:p.name,content_type:'product'});const m=`السلام عليكم،\nأريد طلب "${p.name}" من متجر LCARE IQ\nالسعر: ${fmt(p.price)} د.ع\n\nشكرًا لكم 🌹`;window.open(`https://wa.me/${WA}?text=${encodeURIComponent(m)}`,'_blank');}
 
 /* ════ MODAL ════ */
 function openModal(id){const p=PRODUCTS.find(x=>x.id===id);if(!p)return;mProd=p;mQty=1;
@@ -911,7 +935,7 @@ function openModal(id){const p=PRODUCTS.find(x=>x.id===id);if(!p)return;mProd=p;
     <div class="modal-act"><div class="modal-qty"><button class="qbtn" onclick="mQ(-1)">−</button><span class="qval" id="mQv">1</span><button class="qbtn" onclick="mQ(1)">+</button></div><button class="modal-add" onclick="mAdd()">أضف للسلة</button><button class="modal-wa" onclick="buyDirect('${p.id}')" aria-label="واتساب"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.5 14.4c-.3-.2-1.9-.9-2.2-1-.3-.1-.5-.2-.7.2-.2.3-.8 1-1 1.2-.2.2-.4.2-.7.1-.3-.2-1.4-.5-2.6-1.6-1-.9-1.6-2-1.8-2.3-.2-.3 0-.5.1-.6l.5-.5c.2-.2.2-.3.3-.5.1-.2 0-.4 0-.5 0-.1-.7-1.7-1-2.3-.3-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4-.3.3-1 1-1 2.4 0 1.4 1.1 2.8 1.2 3 .2.2 2.1 3.2 5 4.5.7.3 1.2.5 1.7.6.7.2 1.3.2 1.8.1.6-.1 1.9-.8 2.1-1.5.3-.7.3-1.4.2-1.5-.1-.1-.3-.2-.6-.4z"/></svg></button></div>
     ${rel.length?`<div class="mblock" style="margin-top:24px"><h5>${ic('cart')} منتجات مكمّلة</h5><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px">${rel.map(r=>`<button class="btn btn-sec" style="font-size:12.5px;padding:8px 15px" onclick="openModal('${r.id}')">${r.name}</button>`).join('')}</div></div>`:''}`;
   $('pModal').classList.add('on');$('ov').classList.add('on');document.body.style.overflow='hidden';
-  if(window.dataLayer)dataLayer.push({event:'view_item',ecommerce:{currency:'IQD',value:p.price,items:[{item_id:p.id,item_name:p.name,price:p.price}]}});}
+  lcTrack('ViewContent',{content_ids:[p.id],content_name:p.name,content_type:'product',value:p.price,currency:'IQD'});}
 function mQ(d){mQty=Math.max(1,mQty+d);$('mQv').textContent=mQty;}
 function mAdd(){if(!mProd)return;for(let i=0;i<mQty;i++)addCart(mProd.id);closeModal();openCart();}
 function closeModal(){$('pModal').classList.remove('on');$('ov').classList.remove('on');document.body.style.overflow='';}
