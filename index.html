@@ -6,8 +6,15 @@
 <title>LCARE IQ Store — حياة السكري تصبح أسهل مع الأدوات الصحيحة</title>
 <meta name="description" content="متجر LCARE IQ — مستلزمات مرضى السكري المختارة بعناية بإشراف صيدلاني. حساسات CGM، لاصقات حماية، حقائب تبريد الإنسولين، أدوات قياس — راحة أكبر، توصيل داخل العراق.">
 <meta name="theme-color" content="#FAF8F3">
+<link rel="canonical" href="https://store.lcareiq.com/">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://store.lcareiq.com/">
+<meta property="og:site_name" content="LCARE IQ Store">
+<meta property="og:locale" content="ar_IQ">
 <meta property="og:title" content="LCARE IQ Store">
 <meta property="og:description" content="حياة السكري تصبح أسهل مع الأدوات الصحيحة">
+<meta property="og:image" content="https://store.lcareiq.com/images/hero.jpg">
+<meta name="twitter:card" content="summary_large_image">
 
 <!-- ═══════════════════════════════════════════════════════════
      Meta Pixel + Conversions API — متجر LCARE (Pixel ID: 3613882612094743)
@@ -20,26 +27,72 @@ n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.p
 n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;
 s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script',
 'https://connect.facebook.net/en_US/fbevents.js');
-fbq('init','3613882612094743');
 
 window.dataLayer = window.dataLayer || []; // harmless stub (GTM not used)
 
-/* ── محرّك تتبع موحّد: Pixel + CAPI بنفس event_id لمنع التكرار ── */
+/* ════════ محرّك تتبع موحّد + مطابقة متقدمة (أقصى جودة) ════════
+   external_id ثابت لكل متصفح + بيانات العميل (إيميل/هاتف/اسم/مدينة)
+   تُمرَّر للـ Pixel (يشفّرها تلقائياً) وللـ CAPI (يشفّرها الخادم).
+   نفس event_id بين المصدرين = منع التكرار. */
 window.LC_CAPI = '/.netlify/functions/capi';
+window.LC_PIXEL = '3613882612094743';
+
 function lcCookie(n){var m=document.cookie.match(new RegExp('(^| )'+n+'=([^;]+)'));return m?m[2]:undefined;}
 function lcEventId(){return 'lc_'+Date.now()+'_'+Math.random().toString(36).slice(2,11);}
+
+/* external_id: معرّف مجهول ثابت يُخزَّن في المتصفح — أقوى إشارة مطابقة */
+function lcExternalId(){
+  try{
+    var k='lc_xid', v=localStorage.getItem(k);
+    if(!v){ v='lcx_'+Date.now().toString(36)+Math.random().toString(36).slice(2,12); localStorage.setItem(k,v); }
+    return v;
+  }catch(e){ return undefined; }
+}
+
+/* تطبيع رقم الهاتف العراقي إلى صيغة دولية (9647XXXXXXXXX) للمطابقة الدقيقة */
+function lcNormPhone(p){
+  if(!p) return undefined;
+  var d=(''+p).replace(/\D/g,'');
+  if(d.indexOf('00')===0) d=d.slice(2);
+  if(d.charAt(0)==='0') d='964'+d.slice(1);
+  else if(d.indexOf('964')!==0) d='964'+d;
+  return d;
+}
+
+/* بيانات العميل المحفوظة (تُملأ عند الطلب وتبقى للأحداث القادمة) */
+var LC_USER = {};
+try{ LC_USER = JSON.parse(localStorage.getItem('lc_user')||'{}'); }catch(e){}
+
+/* حفظ بيانات العميل + إعادة تهيئة Pixel بالمطابقة المتقدمة */
+function lcSetUser(d){
+  d = d || {};
+  if(d.ph) d.ph = lcNormPhone(d.ph);
+  if(d.em) d.em = (''+d.em).trim().toLowerCase();
+  Object.keys(d).forEach(function(k){ if(d[k]) LC_USER[k]=d[k]; });
+  try{ localStorage.setItem('lc_user', JSON.stringify(LC_USER)); }catch(e){}
+  if(window.fbq){
+    var am = { external_id: lcExternalId(), country:'iq' };
+    ['em','ph','fn','ln','ct'].forEach(function(k){ if(LC_USER[k]) am[k]=LC_USER[k]; });
+    fbq('init', window.LC_PIXEL, am);   // Pixel يشفّر القيم تلقائياً
+  }
+}
+
+/* تهيئة أولية: external_id متوفر من أول زيارة */
+fbq('init','3613882612094743', { external_id: lcExternalId(), country:'iq' });
+
 function lcTrack(name,custom){
   custom = custom || {};
   var id = lcEventId();
   if(window.fbq) fbq('track', name, custom, {eventID:id});      // 1) متصفح
   try{                                                            // 2) خادم
+    var ud = { fbp:lcCookie('_fbp'), fbc:lcCookie('_fbc'), external_id:lcExternalId() };
+    ['em','ph','fn','ln','ct'].forEach(function(k){ if(LC_USER[k]) ud[k]=LC_USER[k]; });
     fetch(window.LC_CAPI,{
       method:'POST', keepalive:true,
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify({
         event_name:name, event_id:id, event_source_url:location.href,
-        custom_data:custom,
-        user_data:{ fbp:lcCookie('_fbp'), fbc:lcCookie('_fbc') }
+        custom_data:custom, user_data:ud
       })
     }).catch(function(){});
   }catch(e){}
@@ -648,6 +701,7 @@ button{font-family:inherit;cursor:pointer}
   <div class="co-body">
     <div class="fld"><label>الاسم الكامل <span>*</span></label><input id="coName" placeholder="اسمك الكريم"></div>
     <div class="fld"><label>رقم الهاتف <span>*</span></label><input id="coPhone" type="tel" placeholder="07XX XXX XXXX"></div>
+    <div class="fld"><label>البريد الإلكتروني (اختياري — لتأكيد الطلب)</label><input id="coEmail" type="email" placeholder="example@email.com"></div>
     <div class="fld-row">
       <div class="fld"><label>المحافظة <span>*</span></label><select id="coGov"><option value="">اختر</option><option>بغداد</option><option>البصرة</option><option>نينوى</option><option>أربيل</option><option>النجف</option><option>كربلاء</option><option>كركوك</option><option>الأنبار</option><option>ديالى</option><option>واسط</option><option>ميسان</option><option>ذي قار</option><option>المثنى</option><option>القادسية</option><option>بابل</option><option>صلاح الدين</option><option>دهوك</option><option>السليمانية</option><option>حلبجة</option></select></div>
       <div class="fld"><label>الدفع</label><input value="عند الاستلام" disabled style="color:var(--ink-m)"></div>
@@ -907,8 +961,11 @@ function closeCart(){$('cart').classList.remove('on');$('ov').classList.remove('
 /* ════ CHECKOUT ════ */
 function openCheckout(){if(!cart.length)return;const sub=cart.reduce((s,i)=>s+i.price*i.qty,0);$('coSummary').innerHTML=cart.map(i=>`<div class="crow"><span>${i.name} × ${i.qty}</span><span>${fmt(i.price*i.qty)} د.ع</span></div>`).join('')+`<div class="crow tot"><span>المجموع</span><span>${fmt(sub)} د.ع</span></div>`;closeCart();$('coModal').classList.add('on');$('ov').classList.add('on');document.body.style.overflow='hidden';}
 function closeCheckout(){$('coModal').classList.remove('on');$('ov').classList.remove('on');document.body.style.overflow='';}
-function submitOrder(){const name=$('coName').value.trim(),phone=$('coPhone').value.trim(),gov=$('coGov').value,addr=$('coAddr').value.trim(),notes=$('coNotes').value.trim();
+function submitOrder(){const name=$('coName').value.trim(),phone=$('coPhone').value.trim(),email=($('coEmail')?$('coEmail').value.trim():''),gov=$('coGov').value,addr=$('coAddr').value.trim(),notes=$('coNotes').value.trim();
   if(!name||!phone||!gov||!addr){toast('يرجى ملء الحقول المطلوبة *');return;}
+  // مطابقة متقدمة: حفظ بيانات العميل (تُشفّر تلقائياً قبل الإرسال لـ Meta)
+  var parts=name.split(/\s+/);
+  lcSetUser({ fn:parts[0], ln:(parts.length>1?parts.slice(1).join(' '):''), ph:phone, em:email, ct:gov });
   const sub=cart.reduce((s,i)=>s+i.price*i.qty,0);
   let m=`طلب جديد من متجر LCARE IQ\n\n👤 الاسم: ${name}\n📞 الهاتف: ${phone}\n📍 المحافظة: ${gov}\n🏠 العنوان: ${addr}\n`;
   if(notes)m+=`📝 ملاحظات: ${notes}\n`;m+=`\n🛒 الطلب:\n`;
