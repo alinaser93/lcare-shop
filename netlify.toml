@@ -1,3 +1,11 @@
 [build]
   publish = "."
   functions = "netlify/functions"
+
+# توحيد النطاق: تحويل عنوان netlify.app إلى النطاق المخصص store.lcareiq.com
+# (يوحّد مصدر الأحداث + يمنع المحتوى المكرر لتحسين الـ SEO)
+[[redirects]]
+  from = "https://lcare-shop.netlify.app/*"
+  to = "https://store.lcareiq.com/:splat"
+  status = 301
+  force = true
