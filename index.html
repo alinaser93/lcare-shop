@@ -164,17 +164,15 @@ function lcSetUser(d){
   if(d.em) d.em = (''+d.em).trim().toLowerCase();
   Object.keys(d).forEach(function(k){ if(d[k]) LC_USER[k]=d[k]; });
   try{ localStorage.setItem('lc_user', JSON.stringify(LC_USER)); }catch(e){}
-  // ملاحظة: لا نعيد fbq('init') هنا لتجنّب تحذير "Duplicate Pixel ID".
-  // بيانات العميل تُرسل فوراً عبر CAPI (مشفّرة في الخادم)، وتُطبّق على الـ Pixel
-  // في الزيارة التالية عبر التهيئة الأولية أدناه التي تقرأ LC_USER المحفوظ.
+  if(window.fbq){
+    var am = { external_id: lcExternalId(), country:'iq' };
+    ['em','ph','fn','ln','ct'].forEach(function(k){ if(LC_USER[k]) am[k]=LC_USER[k]; });
+    fbq('init', window.LC_PIXEL, am);   // Pixel يشفّر القيم تلقائياً
+  }
 }
 
-/* تهيئة أولية (مرة واحدة): external_id دائماً + بيانات العميل المحفوظة إن وُجدت */
-(function(){
-  var am = { external_id: lcExternalId(), country:'iq' };
-  ['em','ph','fn','ln','ct'].forEach(function(k){ if(LC_USER[k]) am[k]=LC_USER[k]; });
-  fbq('init','3613882612094743', am);
-})();
+/* تهيئة أولية: external_id متوفر من أول زيارة */
+fbq('init','3613882612094743', { external_id: lcExternalId(), country:'iq' });
 
 function lcTrack(name,custom){
   custom = custom || {};
@@ -457,11 +455,12 @@ button{font-family:inherit;cursor:pointer}
 .edu{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
 .educ{background:var(--paper);border:1px solid var(--line);border-radius:var(--r-l);overflow:hidden;transition:all .5s var(--e);cursor:pointer;display:flex;flex-direction:column}
 .educ:hover{transform:translateY(-5px);box-shadow:var(--sh-md)}
-.educ-top{height:110px;background:linear-gradient(135deg,var(--teal),var(--teal-l));display:grid;place-items:center;position:relative;overflow:hidden}
+.educ-top{height:132px;background:linear-gradient(135deg,var(--teal),var(--teal-l));display:grid;place-items:center;position:relative;overflow:hidden}
 .educ:nth-child(2) .educ-top{background:linear-gradient(135deg,var(--teal-d),var(--teal))}
 .educ:nth-child(3) .educ-top{background:linear-gradient(135deg,var(--teal-l),var(--teal-d))}
 .educ:nth-child(4) .educ-top{background:linear-gradient(135deg,var(--teal),var(--teal-d))}
 .educ-top svg{width:44px;height:44px;color:rgba(255,255,255,.92);z-index:1}
+.educ-top svg.scene{width:100%;height:100%;position:absolute;inset:0}
 .educ-top::before{content:'';position:absolute;width:110px;height:110px;border:1px solid rgba(255,255,255,.16);border-radius:50%;top:-35px;left:-25px}
 .educ-body{padding:18px;display:flex;flex-direction:column;flex:1}
 .educ-body h4{font-family:var(--ft);font-weight:700;font-size:15px;color:var(--ink);line-height:1.45;margin-bottom:8px}
@@ -516,8 +515,8 @@ button{font-family:inherit;cursor:pointer}
 .foot-disc{background:rgba(251,249,244,.04);border:1px solid rgba(251,249,244,.08);border-radius:var(--r);padding:17px 20px;margin-bottom:26px;font-size:12.5px;color:rgba(251,249,244,.5);line-height:1.75;display:flex;gap:12px;align-items:flex-start}
 .foot-disc svg{width:19px;height:19px;color:var(--teal-l);flex-shrink:0;margin-top:2px}
 .foot-bottom{padding-top:24px;border-top:1px solid rgba(251,249,244,.1);display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap;font-size:12px;color:rgba(251,249,244,.42)}
-@media(max-width:820px){.foot-grid{grid-template-columns:1fr 1fr;gap:30px}.foot-brand{grid-column:1/-1}}
-@media(max-width:480px){.foot-grid{grid-template-columns:1fr}}
+@media(max-width:820px){.foot-grid{grid-template-columns:repeat(3,1fr);gap:26px}.foot-brand{grid-column:1/-1}}
+@media(max-width:430px){.foot-grid{gap:13px}.foot-col h5{font-size:13px;margin-bottom:11px}.foot-col a{font-size:11.5px;padding:5px 0}}
 
 /* overlay/cart/modal */
 .ov{position:fixed;inset:0;background:rgba(28,24,19,.2);backdrop-filter:blur(2px);opacity:0;visibility:hidden;transition:all .4s var(--e);z-index:80}
@@ -628,11 +627,12 @@ section[id]{scroll-margin-top:80px}
 .co-submit:hover{background:#1eb858}
 .co-submit svg{width:19px;height:19px}
 
-.mcta{position:fixed;bottom:0;left:0;right:0;z-index:45;background:rgba(251,249,244,.92);backdrop-filter:blur(16px);border-top:1px solid var(--line);padding:11px 14px calc(11px + env(safe-area-inset-bottom));display:none;gap:9px}
-[data-theme="dark"] .mcta{background:rgba(15,13,10,.92)}
-.mcta .btn{flex:1;padding:13px;font-size:14px}
-.mcta .mc-cart{flex:0 0 auto;width:50px;padding:0;background:var(--off);color:var(--ink);border-color:var(--line);position:relative}
-@media(max-width:720px){.mcta{display:flex}body{padding-bottom:74px}}
+.mcta{position:fixed;bottom:calc(11px + env(safe-area-inset-bottom));left:13px;right:13px;z-index:45;background:rgba(252,250,246,.52);backdrop-filter:blur(28px) saturate(1.7);-webkit-backdrop-filter:blur(28px) saturate(1.7);border:1px solid rgba(255,255,255,.5);border-radius:19px;padding:8px;display:none;gap:8px;box-shadow:0 12px 36px rgba(28,24,19,.2)}
+[data-theme="dark"] .mcta{background:rgba(18,15,11,.48);border-color:rgba(255,255,255,.08)}
+.mcta .btn{flex:1;padding:14px;font-size:14.5px;border-radius:13px;display:inline-flex;align-items:center;justify-content:center;gap:8px;transition:transform .15s var(--e)}
+.mcta .btn svg{width:18px;height:18px}
+.mcta .btn:active{transform:scale(.95)}
+@media(max-width:720px){.mcta{display:flex}body{padding-bottom:90px}}
 
 .fwa{position:fixed;bottom:22px;left:22px;width:54px;height:54px;border-radius:50%;background:var(--green);display:grid;place-items:center;color:#fff;z-index:44;box-shadow:0 10px 30px rgba(37,211,102,.4);animation:floaty 3s ease-in-out infinite}
 .fwa:hover{transform:scale(1.1)}
@@ -829,8 +829,8 @@ section[id]{scroll-margin-top:80px}
 <a href="https://wa.me/9647838967935?text=السلام عليكم، أحتاج استشارة من متجر LCARE IQ" target="_blank" class="fwa" aria-label="WhatsApp"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.5 14.4c-.3-.2-1.9-.9-2.2-1-.3-.1-.5-.2-.7.2-.2.3-.8 1-1 1.2-.2.2-.4.2-.7.1-.3-.2-1.4-.5-2.6-1.6-1-.9-1.6-2-1.8-2.3-.2-.3 0-.5.1-.6l.5-.5c.2-.2.2-.3.3-.5.1-.2 0-.4 0-.5 0-.1-.7-1.7-1-2.3-.3-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4-.3.3-1 1-1 2.4 0 1.4 1.1 2.8 1.2 3 .2.2 2.1 3.2 5 4.5.7.3 1.2.5 1.7.6.7.2 1.3.2 1.8.1.6-.1 1.9-.8 2.1-1.5.3-.7.3-1.4.2-1.5-.1-.1-.3-.2-.6-.4z"/></svg></a>
 
 <div class="mcta">
-  <a class="btn btn-pri" onclick="go('featured')">تسوّق الآن</a>
-  <a class="btn btn-wa" href="https://wa.me/9647838967935" target="_blank">واتساب</a>
+  <a class="btn btn-pri" onclick="go('featured')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>تسوّق الآن</a>
+  <a class="btn btn-wa" href="https://wa.me/9647838967935" target="_blank"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.5 14.4c-.3-.2-1.9-.9-2.2-1-.3-.1-.5-.2-.7.2-.2.3-.8 1-1 1.2-.2.2-.4.2-.7.1-.3-.2-1.4-.5-2.6-1.6-1-.9-1.6-2-1.8-2.3-.2-.3 0-.5.1-.6l.5-.5c.2-.2.2-.3.3-.5.1-.2 0-.4 0-.5 0-.1-.7-1.7-1-2.3-.3-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4-.3.3-1 1-1 2.4 0 1.4 1.1 2.8 1.2 3 .2.2 2.1 3.2 5 4.5.7.3 1.2.5 1.7.6.7.2 1.3.2 1.8.1.6-.1 1.9-.8 2.1-1.5.3-.7.3-1.4.2-1.5-.1-.1-.3-.2-.6-.4z"/></svg>واتساب</a>
 </div>
 
 <div class="ov" id="ov" onclick="closeAll()"></div>
@@ -1125,7 +1125,13 @@ function pickCond(id){activeCond=id;document.querySelectorAll('.cond').forEach(e
   $('condResult').classList.add('show');setTimeout(function(){$('condResult').scrollIntoView({behavior:'smooth',block:'start'});},150);if(window.dataLayer)dataLayer.push({event:'select_condition',condition:id});}
 function miniCard(p){return `<div class="pcard" onclick="openModal('${p.id}')"><div class="pcard-media">${imgOrIllu(p,'pcard-illu')}<button class="pquick" onclick="event.stopPropagation();openModal('${p.id}')">${ic('eye')}</button></div><div class="pcard-body"><div class="pcard-cat">${p.catName}</div><div class="pcard-name">${p.name}</div><div class="pcard-foot"><div class="pcard-price"><b>${fmt(p.price)}</b> <small>د.ع</small></div><button class="pcard-add" onclick="event.stopPropagation();addCart('${p.id}')">${ic('cart')}</button></div></div></div>`;}
 function renderBundles(){$('bundlesGrid').innerHTML=BUNDLES.map((b,i)=>`<div class="bundle rv d${(i%2)+1}"><div class="bundle-top"><div class="bundle-ic">${ic(b.ic)}</div><span class="bundle-badge">${b.badge}</span></div><h3>${b.name}</h3><p class="bundle-sub">${b.sub}</p><ul class="bundle-items">${b.items.map(it=>`<li>${ic('check')}<span class="bi-n">${it.n}</span><span class="bi-p">${fmt(it.p)}</span></li>`).join('')}</ul><div class="bundle-val"><span>قيمتها لو اشتريتها منفصلة</span><b>${fmt(b.old)} د.ع</b></div><div class="bundle-foot"><div class="bundle-price"><b>${fmt(b.price)}</b> <small>د.ع</small><span class="save">توفّر ${fmt(b.old-b.price)} د.ع</span></div><button class="btn btn-pri" onclick="buyBundle('${b.name}',${b.price})">اطلب الباقة</button></div></div>`).join('');}
-function renderEdu(){$('eduGrid').innerHTML=EDU.map(e=>`<div class="educ" onclick="openModal('${e.link}')"><div class="educ-top">${ic(e.ic)}</div><div class="educ-body"><h4>${e.title}</h4><p>${e.text}</p><span class="educ-link">${e.linkTxt}<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg></span></div></div>`).join('');}
+const EDU_SCENES={
+  shield:`<svg class="scene" viewBox="0 0 200 120" preserveAspectRatio="xMidYMid meet" fill="none" stroke="#fff" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="M22 96 H178" stroke="rgba(255,255,255,.25)" stroke-width="3"/><g><animateTransform attributeName="transform" type="translate" values="0 -52;0 0;0 0;0 -52" keyTimes="0;0.32;0.82;1" dur="3.4s" repeatCount="indefinite"/><rect x="62" y="52" width="76" height="42" rx="13" fill="rgba(255,255,255,.16)" stroke="rgba(255,255,255,.6)" stroke-width="2.6"/></g><circle cx="100" cy="72" r="15" fill="rgba(255,255,255,.14)"/><circle cx="100" cy="72" r="5.5" fill="#fff" stroke="none"/><g opacity="0"><animate attributeName="opacity" values="0;0;1;1;0" keyTimes="0;0.45;0.55;0.85;1" dur="3.4s" repeatCount="indefinite"/><circle cx="138" cy="46" r="12" fill="#fff" stroke="none"/><path d="M132 46 l4 4 7-8" stroke="#11716A" stroke-width="3"/></g></svg>`,
+  plane:`<svg class="scene" viewBox="0 0 200 120" preserveAspectRatio="xMidYMid meet" fill="none" stroke="#fff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 42 Q100 14 188 42" stroke="rgba(255,255,255,.3)" stroke-width="2.2" stroke-dasharray="5 7"/><g><animateTransform attributeName="transform" type="translate" values="0 0;0 -5;0 0" dur="2.6s" repeatCount="indefinite"/><rect x="80" y="70" width="40" height="32" rx="7" fill="rgba(255,255,255,.16)" stroke="#fff" stroke-width="3"/><path d="M91 70 v-5 a4 4 0 0 1 4-4 h10 a4 4 0 0 1 4 4 v5"/><path d="M100 79 v13 M94 85.5 h12" stroke-width="2.6"/></g><g><animateTransform attributeName="transform" type="translate" values="-60 0;232 0" dur="3.8s" repeatCount="indefinite"/><g transform="translate(34,16) scale(1.7)" fill="#fff" stroke="none"><path d="M17.8 19.2L16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z"/></g></g></svg>`,
+  snow:`<svg class="scene" viewBox="0 0 200 120" preserveAspectRatio="xMidYMid meet" fill="none" stroke="#fff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M100 16 V104" stroke="rgba(255,255,255,.18)" stroke-width="2" stroke-dasharray="4 6"/><g><animateTransform attributeName="transform" type="rotate" from="0 44 36" to="360 44 36" dur="10s" repeatCount="indefinite"/><path d="M44 16 V8 M44 64 V56 M22 36 H14 M74 36 H66 M29 21 l-5.5 -5.5 M64 21 l5.5 -5.5 M29 51 l-5.5 5.5 M64 51 l5.5 5.5" stroke="#ffd86b" stroke-width="2.8"/></g><circle cx="44" cy="36" r="11" fill="#ffd86b" stroke="none"/><g><animateTransform attributeName="transform" type="rotate" values="-7 47 100;7 47 100;-7 47 100" dur="0.5s" repeatCount="indefinite"/><rect x="40" y="66" width="14" height="38" rx="5" fill="rgba(255,138,122,.3)" stroke="#ff8a7a" stroke-width="2.8"/><path d="M47 66 v-6" stroke="#ff8a7a" stroke-width="3"/></g><rect x="120" y="58" width="62" height="46" rx="9" fill="rgba(255,255,255,.16)" stroke="#fff" stroke-width="3"/><path d="M135 58 v-6 a4 4 0 0 1 4-4 h24 a4 4 0 0 1 4 4 v6"/><rect x="144" y="64" width="14" height="34" rx="5" fill="rgba(255,255,255,.28)" stroke="#fff" stroke-width="2.6"/><g transform="translate(165,40)"><g><animateTransform attributeName="transform" type="scale" values="0.7;1.2;0.7" dur="2s" repeatCount="indefinite"/><path d="M0 -9 V9 M-8 -4.5 L8 4.5 M-8 4.5 L8 -4.5" stroke="#bfe9ff" stroke-width="2.6"/></g></g></svg>`,
+  sensor:`<svg class="scene" viewBox="0 0 200 120" preserveAspectRatio="xMidYMid meet" fill="none" stroke="#fff" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="M28 106 Q58 72 150 80 Q176 82 186 106" fill="rgba(255,255,255,.08)" stroke="rgba(255,255,255,.28)" stroke-width="2.4"/><g><animateTransform attributeName="transform" type="rotate" values="0 96 70;-15 96 70;-15 96 70;0 96 70;0 96 70" keyTimes="0;0.18;0.32;0.46;1" dur="3.2s" repeatCount="indefinite"/><circle cx="96" cy="62" r="14" fill="rgba(255,255,255,.14)"/><circle cx="96" cy="62" r="5" fill="#fff" stroke="none"/></g><g opacity="0"><animate attributeName="opacity" values="0;0;1;1;0" keyTimes="0;0.44;0.52;0.9;1" dur="3.2s" repeatCount="indefinite"/><g><animateTransform attributeName="transform" type="translate" values="64 0;0 0;0 0" keyTimes="0;0.5;1" dur="3.2s" repeatCount="indefinite"/><rect x="74" y="46" width="44" height="36" rx="12" fill="rgba(255,255,255,.12)" stroke="rgba(255,255,255,.72)" stroke-width="2.6"/></g></g><g opacity="0"><animate attributeName="opacity" values="0;0;1;1;0" keyTimes="0;0.58;0.66;0.9;1" dur="3.2s" repeatCount="indefinite"/><circle cx="132" cy="40" r="11" fill="#fff" stroke="none"/><path d="M127 40 l3.5 3.5 6 -7" stroke="#11716A" stroke-width="3"/></g></svg>`
+};
+function renderEdu(){$('eduGrid').innerHTML=EDU.map(e=>`<div class="educ" onclick="openModal('${e.link}')"><div class="educ-top">${EDU_SCENES[e.ic]||ic(e.ic)}</div><div class="educ-body"><h4>${e.title}</h4><p>${e.text}</p><span class="educ-link">${e.linkTxt}<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg></span></div></div>`).join('');}
 function renderReviews(){$('proofGrid').innerHTML=REVIEWS.map((r,i)=>`<div class="review rv d${(i%3)+1}"><div class="stars">★★★★★</div><p>${r.txt}</p><div class="review-by"><div class="review-av">${r.n[0]}</div><div><b>${r.n}</b><span>${r.t}</span></div></div></div>`).join('');}
 
 /* ════ CART ════ */
