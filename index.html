@@ -164,15 +164,17 @@ function lcSetUser(d){
   if(d.em) d.em = (''+d.em).trim().toLowerCase();
   Object.keys(d).forEach(function(k){ if(d[k]) LC_USER[k]=d[k]; });
   try{ localStorage.setItem('lc_user', JSON.stringify(LC_USER)); }catch(e){}
-  if(window.fbq){
-    var am = { external_id: lcExternalId(), country:'iq' };
-    ['em','ph','fn','ln','ct'].forEach(function(k){ if(LC_USER[k]) am[k]=LC_USER[k]; });
-    fbq('init', window.LC_PIXEL, am);   // Pixel يشفّر القيم تلقائياً
-  }
+  // ملاحظة: لا نعيد fbq('init') هنا لتجنّب تحذير "Duplicate Pixel ID".
+  // بيانات العميل تُرسل فوراً عبر CAPI (مشفّرة في الخادم)، وتُطبّق على الـ Pixel
+  // في الزيارة التالية عبر التهيئة الأولية أدناه التي تقرأ LC_USER المحفوظ.
 }
 
-/* تهيئة أولية: external_id متوفر من أول زيارة */
-fbq('init','3613882612094743', { external_id: lcExternalId(), country:'iq' });
+/* تهيئة أولية (مرة واحدة): external_id دائماً + بيانات العميل المحفوظة إن وُجدت */
+(function(){
+  var am = { external_id: lcExternalId(), country:'iq' };
+  ['em','ph','fn','ln','ct'].forEach(function(k){ if(LC_USER[k]) am[k]=LC_USER[k]; });
+  fbq('init','3613882612094743', am);
+})();
 
 function lcTrack(name,custom){
   custom = custom || {};
