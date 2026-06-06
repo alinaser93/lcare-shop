@@ -137,6 +137,12 @@ tr:hover td{background:rgba(245,237,220,.3)}
       </button>
       <button class="btn" onclick="exportCSV('nobuy')">📥 غير المشترين</button>
       <button class="btn" onclick="exportCSV('all')">📥 الكل</button>
+      <button class="btn btn-teal" onclick="document.getElementById('csvFile').click()">📥 استيراد طلبات Netlify (CSV)</button>
+      <input type="file" id="csvFile" accept=".csv,text/csv" style="display:none" onchange="importCSV(this.files&&this.files[0])">
+      <button class="btn" onclick="backupJSON()">💾 نسخ احتياطي</button>
+      <button class="btn" onclick="document.getElementById('importFile').click()">📤 استيراد</button>
+      <input type="file" id="importFile" accept="application/json,.json" style="display:none" onchange="importJSON(this.files&&this.files[0])">
+      <button class="btn" onclick="load();render();toast('تم التحديث ✓')">🔄 تحديث</button>
       <button class="btn" onclick="logout()">خروج</button>
     </div>
   </div>
@@ -190,6 +196,7 @@ tr:hover td{background:rgba(245,237,220,.3)}
 
   <div class="note">
     <b>كيف يعمل رفع المشترين لفيسبوك؟</b><br>
+    ٠. نزّل ملف الطلبات من Netlify (Forms ← orders ← Download as CSV)، ثم اضغط <b>📥 استيراد طلبات Netlify</b> هنا — تتحوّل لطلبات تلقائياً دون تكرار، وتُحفظ حالاتك (اشترى/لا) عند إعادة الاستيراد.<br>
     ١. اضغط <b>✓ (اشترى)</b> بجانب كل عميل أكّد شراءه فعلاً (يُطلق حدث Purchase تلقائياً لفيسبوك).<br>
     ٢. اضغط <b>تصدير المشترين (CSV)</b> — يُنزّل ملفاً بصيغة Meta جاهزة.<br>
     ٣. في فيسبوك: <b>Audiences → Create Audience → Customer List</b> → ارفع الملف → أنشئ منه <b>Lookalike</b> (جمهور مشابه يشتري).<br>
@@ -223,6 +230,7 @@ function showApp(){
   document.getElementById('gate').style.display='none';
   document.getElementById('app').style.display='block';
   load();render();
+  if(!window._lcStorBound){ window._lcStorBound=true; window.addEventListener('storage',function(e){ if(e.key==='lc_orders'){ load(); render(); } }); }
 }
 
 /* ════════ بيانات ════════ */
@@ -386,6 +394,94 @@ function exportCSV(which){
 }
 
 /* ════════ toast ════════ */
+/* ════════ استيراد طلبات Netlify (CSV) ════════ */
+function parseCSV(text){
+  if(text && text.charCodeAt(0)===0xFEFF) text=text.slice(1);
+  var rows=[], row=[], field='', i=0, inQ=false, c;
+  while(i<text.length){
+    c=text[i];
+    if(inQ){
+      if(c==='"'){ if(text[i+1]==='"'){ field+='"'; i+=2; continue; } inQ=false; i++; continue; }
+      field+=c; i++; continue;
+    } else {
+      if(c==='"'){ inQ=true; i++; continue; }
+      if(c===','){ row.push(field); field=''; i++; continue; }
+      if(c==='\n'){ row.push(field); rows.push(row); row=[]; field=''; i++; continue; }
+      if(c==='\r'){ i++; continue; }
+      field+=c; i++; continue;
+    }
+  }
+  if(field!=='' || row.length){ row.push(field); rows.push(row); }
+  return rows;
+}
+function normPhone(p){ if(!p) return ''; var d=(''+p).replace(/\D/g,''); if(d.indexOf('00')===0)d=d.slice(2); if(d.charAt(0)==='0')d='964'+d.slice(1); else if(d.indexOf('964')!==0&&d)d='964'+d; return d; }
+function importCSV(file){
+  if(!file){return;}
+  var r=new FileReader();
+  r.onload=function(){
+    try{
+      var rows=parseCSV(r.result);
+      if(rows.length<2){ toast('الملف فارغ أو لا يحتوي طلبات'); return; }
+      var head=rows[0].map(function(h){return (h||'').trim().toLowerCase();});
+      function col(row,name){ var idx=head.indexOf(name); return idx>=0?((row[idx]||'').trim()):''; }
+      var seen={}; orders.forEach(function(o){ if(o&&o.id) seen[o.id]=true; });
+      var added=0, skipped=0;
+      for(var k=1;k<rows.length;k++){
+        var row=rows[k]; if(!row || row.length<2) continue;
+        var name=col(row,'name'), phoneRaw=col(row,'phone');
+        if(!name && !phoneRaw) continue;
+        var created=col(row,'created_at');
+        var ts=created?(new Date(created)).getTime():Date.now(); if(isNaN(ts)) ts=Date.now();
+        var id='ord_'+ts;
+        if(seen[id]){ skipped++; continue; }
+        var notes=col(row,'notes'); if(notes==='—'||notes==='-') notes='';
+        var totalNum=parseInt((col(row,'total')||'').replace(/[^0-9]/g,''),10)||0;
+        orders.push({ id:id, ts:ts, name:name, phone:normPhone(phoneRaw), phoneRaw:phoneRaw,
+          email:col(row,'email'), gov:col(row,'governorate'), addr:col(row,'address'),
+          notes:notes, products:col(row,'products'), total:totalNum,
+          pay:col(row,'payment'), status:'pending' });
+        seen[id]=true; added++;
+      }
+      orders.sort(function(a,b){ return (b.ts||0)-(a.ts||0); });
+      save(); render();
+      toast(added>0 ? ('تم استيراد '+added+' طلب جديد ✓'+(skipped?(' · تخطّى '+skipped+' مكرّر'):'')) : 'لا طلبات جديدة (كلها موجودة مسبقاً)');
+    }catch(e){ toast('تعذّرت قراءة ملف CSV'); }
+    try{ document.getElementById('csvFile').value=''; }catch(_){}
+  };
+  r.readAsText(file);
+}
+/* ════════ نسخ احتياطي / استيراد ════════ */
+function backupJSON(){
+  try{
+    var data=JSON.stringify({app:"lcare-orders",ts:Date.now(),count:orders.length,orders:orders},null,2);
+    var blob=new Blob([data],{type:"application/json"});
+    var url=URL.createObjectURL(blob);
+    var d=new Date(), dt=d.getFullYear()+"-"+("0"+(d.getMonth()+1)).slice(-2)+"-"+("0"+d.getDate()).slice(-2);
+    var a=document.createElement("a"); a.href=url; a.download="lcare-orders-"+dt+".json";
+    document.body.appendChild(a); a.click();
+    setTimeout(function(){ try{URL.revokeObjectURL(url); a.remove();}catch(_){} },150);
+    toast("تم حفظ نسخة احتياطية ("+orders.length+" طلب) 💾");
+  }catch(e){ toast("تعذّر إنشاء النسخة"); }
+}
+function importJSON(file){
+  if(!file){return;}
+  var r=new FileReader();
+  r.onload=function(){
+    try{
+      var parsed=JSON.parse(r.result);
+      var arr=Array.isArray(parsed)?parsed:((parsed&&Array.isArray(parsed.orders))?parsed.orders:null);
+      if(!arr){ toast("ملف غير صالح"); return; }
+      var seen={}; orders.forEach(function(o){ if(o&&o.id) seen[o.id]=true; });
+      var added=0;
+      arr.forEach(function(o){ if(o&&o.id&&!seen[o.id]){ orders.push(o); seen[o.id]=true; added++; } });
+      orders.sort(function(a,b){ return (b.ts||0)-(a.ts||0); });
+      save(); render();
+      toast(added>0?("تم استيراد "+added+" طلب جديد ✓"):"لا توجد طلبات جديدة (موجودة مسبقاً)");
+    }catch(e){ toast("تعذّرت قراءة الملف"); }
+    try{ document.getElementById("importFile").value=""; }catch(_){}
+  };
+  r.readAsText(file);
+}
 function toast(t){var el=document.getElementById('toast');document.getElementById('toastTxt').textContent=t;el.classList.add('on');setTimeout(function(){el.classList.remove('on');},2800);}
 
 /* ════════ init ════════ */
