@@ -191,7 +191,7 @@ function lcConsentChoose(v){
   document.body.classList.remove('ck-open');
   var el=document.getElementById('cookieBar');
   if(el){ el.classList.remove('show'); setTimeout(function(){ el.style.display='none'; },480); }
-  if(v){ lcLoadPixel(); lcTrack('PageView',{}); }
+  if(v){ lcLoadPixel(); lcTrack('PageView',{}); if(mProd) lcTrack('ViewContent',{content_ids:[mProd.id],content_name:mProd.name,content_type:'product',value:mProd.price,currency:'IQD'}); }
 }
 
 function lcTrack(name,custom){
@@ -1834,6 +1834,13 @@ function openModal(id){const p=PRODUCTS.find(x=>x.id===id);if(!p)return;mProd=p;
   $('mSticky').innerHTML=p.soon?`<button class="ms-add ms-notify" onclick="notifyMe('${p.id}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg> أبلغني عند التوفّر</button>`:`<div class="ms-tot" id="msTot">${fmt(unitPrice(p,mQty)*mQty)} د.ع</div><button class="ms-add" onclick="mAdd()">أضف للسلة</button>`;
   $('pModal').classList.add('on');$('ov').classList.add('on');lcMarkOpen();
   lcTrack('ViewContent',{content_ids:[p.id],content_name:p.name,content_type:'product',value:p.price,currency:'IQD'});}
+/* فتح المنتج تلقائياً من رابط ?product=ID — لروابط الإعلانات والكتالوج العميقة */
+window.addEventListener('load',function(){
+  try{
+    var _pid=new URLSearchParams(location.search).get('product');
+    if(_pid&&PRODUCTS.some(function(x){return x.id===_pid;})) openModal(_pid);
+  }catch(e){}
+});
 function mQ(d){mQty=Math.max(1,mQty+d);$('mQv').textContent=mQty;var mt=$('mTotal');if(mt&&mProd)mt.textContent='الإجمالي: '+fmt(unitPrice(mProd,mQty)*mQty)+' د.ع';var ms=$('msTot');if(ms&&mProd)ms.textContent=fmt(unitPrice(mProd,mQty)*mQty)+' د.ع';var sb=$('mSaveBox');if(sb&&mProd)sb.innerHTML=savingsHTML(mProd,mQty);}
 function playVid(el,vid){el.innerHTML='<iframe src="https://www.youtube.com/embed/'+vid+'?autoplay=1&rel=0&playsinline=1" title="فيديو التركيب" allow="autoplay; encrypted-media; fullscreen" allowfullscreen></iframe>';}
 function mAdd(){if(!mProd)return;addCart(mProd.id,mQty,null,true);$('pModal').classList.remove('on');$('cart').classList.add('on');$('ov').classList.add('on');lcMarkOpen();}
