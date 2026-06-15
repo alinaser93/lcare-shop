@@ -1822,12 +1822,9 @@ function cartHasCat(c){return cart.some(function(i){var p=PRODUCTS.find(function
 function cartHasId(id){return cart.some(function(i){return i.id===id;});}
 function sensorQty(){return cart.reduce(function(s,i){var p=PRODUCTS.find(function(x){return x.id===i.id;});return s+(p&&p.cat==='cgm'?i.qty:0);},0);}
 function itemQty(id){var i=cart.find(function(x){return x.id===id;});return i?i.qty:0;}
-function giftQty(p){if(!p||!p.gift)return 0;if(p.id==='alcohol-gift'){return sensorQty()>0?sensorQty():((cartHasId('glucometer')||cartHasId('strips'))?1:0);}if(p.giftWith==='sensor')return sensorQty();return itemQty(p.giftWith);}
+function giftQty(p){if(!p||!p.gift)return 0;if(p.id==='alcohol-gift'){return sensorQty();}if(p.giftWith==='sensor')return sensorQty();return itemQty(p.giftWith);}
 const ADDON_GROUPS=[
-  {icon:'🧰',title:'أكمل عُدّة حساسك',sub:'يُنصح بها مع كل حساس — تثبيت أطول وتعقيم آمن',show:function(){return cartHasCat('cgm');},items:['alcohol-gift','skintac-trial']},
-  {icon:'🎁',title:'هديتك مع الجهاز',sub:'شرائح فحص ومسحات تعقيم مجاناً مع جهازك',show:function(){return cartHasId('glucometer');},items:['strips-gift','alcohol-gift']},
-  {icon:'🩸',title:'أضِف جهاز القياس بسعر خاص',sub:'On Call Plus بـ٢٠٬٠٠٠ بدل ٢٥٬٠٠٠ مع شرائحك',show:function(){return cartHasId('strips')&&!cartHasId('glucometer')&&!cartHasId('glucometer-combo');},items:['glucometer-combo']},
-  {icon:'🎁',title:'هديتك مع الشرائح',sub:'مسحات تعقيم مجاناً مع شرائحك',show:function(){return cartHasId('strips');},items:['alcohol-gift']}
+  {icon:'🧰',title:'أكمل عُدّة حساسك',sub:'يُنصح بها مع كل حساس — تثبيت أطول وتعقيم آمن',show:function(){return cartHasCat('cgm');},items:['alcohol-gift','skintac-trial']}
 ]
 const ADDON_IC={
   'skintac-trial':'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>',
