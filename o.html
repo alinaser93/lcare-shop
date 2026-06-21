@@ -339,7 +339,7 @@ function firePurchase(o){
       body:JSON.stringify({
         event_name:'Purchase', event_id:eid, event_source_url:location.href,
         custom_data:{value:o.total,currency:'IQD'},
-        user_data:{ em:o.email||undefined, ph:o.phone, fn:parts[0], ln:parts.slice(1).join(' '), ct:o.gov, country:'iq' }
+        user_data:{ em:o.email||undefined, ph:o.phone, fn:parts[0], ln:parts.slice(1).join(' '), ct:o.gov, country:'iq', fbp:o.fbp||undefined, fbc:o.fbc||undefined, external_id:o.xid||undefined }
       })}).catch(function(){});
   }catch(e){}
 }
@@ -439,7 +439,8 @@ function importCSV(file){
         orders.push({ id:id, ts:ts, name:name, phone:normPhone(phoneRaw), phoneRaw:phoneRaw,
           email:col(row,'email'), gov:col(row,'governorate'), addr:col(row,'address'),
           notes:notes, products:col(row,'products'), total:totalNum,
-          pay:col(row,'payment'), status:'pending' });
+          pay:col(row,'payment'), status:'pending',
+          fbp:col(row,'fbp'), fbc:col(row,'fbc'), xid:col(row,'external_id') });
         seen[id]=true; added++;
       }
       orders.sort(function(a,b){ return (b.ts||0)-(a.ts||0); });
