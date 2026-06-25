@@ -1055,9 +1055,6 @@ thead th.cmp-best{background:var(--teal-soft)}
   <input type="text" name="products">
   <input type="text" name="total">
   <input type="text" name="payment">
-  <input type="text" name="fbp">
-  <input type="text" name="fbc">
-  <input type="text" name="external_id">
   <input type="text" name="bot-field">
 </form>
 <!-- GTM noscript — DISABLED -->
@@ -1489,7 +1486,7 @@ const PRODUCTS=[
    how:'يُركّب على مؤخرة الذراع بضغطة واحدة، ويعمل حتى ١٤ يومًا بعد إحماء ساعة واحدة. تقرأ النتائج تلقائيًا على هاتفك، مع إمكانية المسح بتقريب الهاتف من الحساس. يتطلب هاتفًا يدعم تقنية NFC.',
    feats:['يدوم حتى ١٤ يومًا','قراءة كل دقيقة بشكل مستمر إلى هاتفك','تنبيهات اختيارية للارتفاع والانخفاض','بدون معايرة ولا وخز للإصبع','دقة عالية موثوقة (MARD ٩.٣٪)','مقاوم للماء — حتى متر واحد لمدة ٣٠ دقيقة','يُمسح حتى من فوق الملابس — صغير ومريح','يتطلب هاتفًا يدعم تقنية NFC'],rel:['libre-patch','skintac','coolbag']},
   {id:'dexcom7',cat:'cgm',catName:'حساسات CGM',name:'Sibionics GS1',price:80000,bulkTiers:[{q:3,u:78333},{q:6,u:78000},{q:12,u:76000}],rating:4.8,reviews:214,tag:'rec',photo:'dexcom7.jpg',
-   original:true,region:'نسخة الشرق الأوسط — عربية',warrantyNote:'في حال كان الحساس عاطلاً — ولا يشمل سوء الاستخدام',
+   original:true,region:'نسخة الشرق الأوسط — عربية',noWarranty:true,
    videos:[{label:'طريقة التركيب (١)',id:'RaYjvyBDR-c'},{label:'طريقة التركيب (٢)',id:'3OMd5nzoEfY'},{label:'المتابعة عن بُعد بين جهازين',id:'ejgQmo72R6s'}],
    fomo:'يثق به أكثر من ٨٥٠ ألف مستخدم حول العالم',
    desc:'حساس المراقبة المستمرة للسكر Sibionics GS1 — إصدار الشرق الأوسط العربي الأصلي. يقرأ سكرك تلقائيًا دون وخز الإصبع ويُرسل القراءات إلى هاتفك مباشرة.',
@@ -1919,9 +1916,7 @@ function submitOrder(){const name=$('coName').value.trim(),phone=$('coPhone').va
   if(_pm.transfer)lcTrack('AddPaymentInfo',{value:tot,currency:'IQD',content_ids:cart.map(i=>i.id),content_type:'product'});
   // حفظ الطلب محلياً للوحة التحكم o.html
   var prodStr=cart.map(i=>i.name+' ×'+i.qty).join(' | ');
-  // التقاط كوكيز جلسة الإعلان (للإسناد القوي عند الشراء لاحقاً عبر صفحة o)
-  var _fbp=lcCookie('_fbp')||'', _fbc=lcCookie('_fbc')||'', _xid=(typeof lcExternalId==='function'?lcExternalId():'');
-  var order={id:'ord_'+Date.now(),ts:Date.now(),name:name,phone:lcNormPhone(phone),phoneRaw:phone,email:email,gov:gov,addr:addr,notes:notes,products:prodStr,total:tot,pay:_pm.name,payId:_pm.id,status:_pm.transfer?'pending_payment':'pending',fbp:_fbp,fbc:_fbc,xid:_xid};
+  var order={id:'ord_'+Date.now(),ts:Date.now(),name:name,phone:lcNormPhone(phone),phoneRaw:phone,email:email,gov:gov,addr:addr,notes:notes,products:prodStr,total:tot,pay:_pm.name,payId:_pm.id,status:_pm.transfer?'pending_payment':'pending'};
   try{var os=JSON.parse(localStorage.getItem('lc_orders')||'[]');os.unshift(order);localStorage.setItem('lc_orders',JSON.stringify(os));}catch(e){}
   // إرسال للـ Netlify Form (يُفعّل إشعار الإيميل إلى alinaser93@gmail.com)
   try{
@@ -1929,7 +1924,6 @@ function submitOrder(){const name=$('coName').value.trim(),phone=$('coPhone').va
     fd.append('form-name','orders');fd.append('name',name);fd.append('phone',phone);
     fd.append('email',email||'—');fd.append('governorate',gov);fd.append('address',addr);
     fd.append('notes',notes||'—');fd.append('products',prodStr);fd.append('total',fmt(tot)+' د.ع');fd.append('payment',_payTxt);
-    fd.append('fbp',_fbp);fd.append('fbc',_fbc);fd.append('external_id',_xid);
     fetch('/',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:fd.toString()}).catch(function(){});
   }catch(e){}
   window.open(`https://wa.me/${WA}?text=${encodeURIComponent(m)}`,'_blank');
@@ -1960,7 +1954,7 @@ function openModal(id){const p=PRODUCTS.find(x=>x.id===id);if(!p)return;mProd=p;
     ${p.noWarranty?`<div class="minfo warn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="12" y1="8" x2="12" y2="13"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg><div><b>بدون ضمان:</b> هذا الحساس لا يشمل أي ضمان صيانة أو استبدال — راجع فيديوهات التركيب أعلاه لضمان التركيب الصحيح.</div></div>`:(p.warrantyNote?`<div class="minfo ok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l7 4v6c0 4-3 7-7 8-4-1-7-4-7-8V6z"/><polyline points="9 12 11 14 15 10"/></svg><div><b>ضمان استبدال:</b> ${p.warrantyNote}</div></div>`:'')}
     ${rel.length?`<div class="mblock" style="margin-top:24px"><h5>${ic('cart')} منتجات مكمّلة</h5><div class="addon-cards" style="margin-top:8px">${rel.map(relCard).join('')}</div></div>`:''}`;
   $('mSticky').innerHTML=p.soon?`<button class="ms-add ms-notify" onclick="notifyMe('${p.id}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg> أبلغني عند التوفّر</button>`:`<div class="ms-tot" id="msTot">${fmt(unitPrice(p,mQty)*mQty)} د.ع</div><button class="ms-add" onclick="mAdd()">أضف للسلة</button>`;
-  $('pModal').classList.add('on');$('ov').classList.add('on');lcMarkOpen();
+  $('pModal').classList.add('on');$('ov').classList.add('on');lcMarkOpen();try{history.replaceState(history.state,'','#'+(id==='dexcom7'?'sibionics':id));}catch(e){}
   lcTrack('ViewContent',{content_ids:[p.id],content_name:p.name,content_type:'product',value:p.price,currency:'IQD'});}
 function mQ(d){mQty=Math.max(1,mQty+d);$('mQv').textContent=mQty;var mt=$('mTotal');if(mt&&mProd)mt.textContent='الإجمالي: '+fmt(unitPrice(mProd,mQty)*mQty)+' د.ع';var ms=$('msTot');if(ms&&mProd)ms.textContent=fmt(unitPrice(mProd,mQty)*mQty)+' د.ع';var sb=$('mSaveBox');if(sb&&mProd)sb.innerHTML=savingsHTML(mProd,mQty);}
 function playVid(el,vid){el.innerHTML='<iframe src="https://www.youtube.com/embed/'+vid+'?autoplay=1&rel=0&playsinline=1" title="فيديو التركيب" allow="autoplay; encrypted-media; fullscreen" allowfullscreen></iframe>';}
@@ -1969,6 +1963,9 @@ function mAdd(){if(!mProd)return;addCart(mProd.id,mQty,null,true);$('pModal').cl
 function notifyMe(id){var p=PRODUCTS.find(x=>x.id===id);if(!p)return;var m=encodeURIComponent('السلام عليكم 🌿، أرغب أن تبلغوني فور توفّر: '+p.name+' 🔔');window.open('https://wa.me/9647748600445?text='+m,'_blank');toast('سنبلغك فور توفّره 🔔');}
 function closeModal(){lcDismiss();}
 function closeAll(){lcDismiss();}
+/* ════ رابط المنتج المباشر (Deep-link): يفتح منتجاً من رابط مثل  ...#libre2  أو  ...#sibionics ════ */
+function lcOpenFromHash(){var h=(location.hash||'').replace(/^#/,'').toLowerCase();if(!h)return;if(h==='sibionics')h='dexcom7';var p=PRODUCTS.find(function(x){return x.id===h;});if(!p)return;if(mProd&&mProd.id===p.id&&$('pModal').classList.contains('on'))return;try{openModal(p.id);}catch(e){}}
+window.addEventListener('hashchange',lcOpenFromHash);
 const POLICIES={
   'return':{ic:'<svg viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'currentColor\' stroke-width=\'1.9\' stroke-linecap=\'round\' stroke-linejoin=\'round\'><polyline points=\'9 14 4 9 9 4\'/><path d=\'M20 20v-7a4 4 0 0 0-4-4H4\'/></svg>',title:'سياسة الاستبدال والإرجاع',sub:'راحتك وثقتك أولويتنا',body:`<p>راحتك وثقتك تأتيان أولاً. لأنك <b>تدفع عند الاستلام</b>، يحقّ لك دائماً معاينة طلبك قبل دفع أي مبلغ.</p><h4><svg viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'currentColor\' stroke-width=\'2\' stroke-linecap=\'round\' stroke-linejoin=\'round\'><polyline points=\'20 6 9 17 4 12\'/></svg>المعاينة قبل الدفع</h4><ul><li>افحص المنتج وتأكّد من سلامته وتطابقه مع طلبك <b>قبل</b> تسليم المبلغ للمندوب.</li><li>إن لم يكن مطابقاً أو وصل تالفاً، لك أن ترفض الاستلام دون أي التزام.</li></ul><h4><svg viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'currentColor\' stroke-width=\'2\' stroke-linecap=\'round\' stroke-linejoin=\'round\'><polyline points=\'20 6 9 17 4 12\'/></svg>الإرجاع والاستبدال خلال ٣ أيام</h4><ul><li>يمكنك طلب الإرجاع أو الاستبدال خلال <b>٣ أيام</b> من تاريخ الاستلام.</li><li>يُشترط أن يكون المنتج بحالته الأصلية، غير مستعمل، وبكامل تغليفه وملحقاته.</li></ul><h4><svg viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'currentColor\' stroke-width=\'2\' stroke-linecap=\'round\' stroke-linejoin=\'round\'><polyline points=\'20 6 9 17 4 12\'/></svg>المنتجات المعقّمة والحساسات</h4><ul><li>لأسباب صحّية وتعقيمية، لا يمكن إرجاع الحساسات (CGM) أو المستلزمات المعقّمة بعد فتح تغليفها — إلّا في حال وجود <b>عيب مصنعي</b>.</li></ul><h4><svg viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'currentColor\' stroke-width=\'2\' stroke-linecap=\'round\' stroke-linejoin=\'round\'><polyline points=\'20 6 9 17 4 12\'/></svg>منتج تالف أو خاطئ؟</h4><ul><li>إن وصلك منتج تالف أو غير المطلوب، نستبدله أو نعيد لك المبلغ كاملاً <b>دون أي تكلفة إضافية</b>.</li></ul><div class="policy-note"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><line x1="12" y1="8" x2="12" y2="13"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg><span>لبدء الإرجاع أو الاستبدال، راسلنا على واتساب خلال المدة المحددة مع رقم طلبك، وسنرتّب لك كل شيء بسهولة.</span></div><div class="policy-updated">آخر تحديث: حزيران ٢٠٢٦</div>`},
   'privacy':{ic:'<svg viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'currentColor\' stroke-width=\'1.9\' stroke-linecap=\'round\' stroke-linejoin=\'round\'><rect x=\'3\' y=\'11\' width=\'18\' height=\'11\' rx=\'2\'/><path d=\'M7 11V7a5 5 0 0 1 10 0v4\'/></svg>',title:'سياسة الخصوصية',sub:'بياناتك في أمانٍ معنا',body:`<p>نحترم خصوصيتك ونجمع أقلّ قدر ممكن من البيانات — فقط ما يلزم لإيصال طلبك إليك.</p><h4><svg viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'currentColor\' stroke-width=\'2\' stroke-linecap=\'round\' stroke-linejoin=\'round\'><polyline points=\'20 6 9 17 4 12\'/></svg>البيانات التي نجمعها</h4><ul><li>الاسم، رقم الهاتف، المحافظة والعنوان — لغرض <b>توصيل طلبك والتواصل معك بشأنه فقط</b>.</li><li>البريد الإلكتروني <b>اختياري</b>، ويُستخدم لتأكيد الطلب عند رغبتك.</li></ul><h4><svg viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'currentColor\' stroke-width=\'2\' stroke-linecap=\'round\' stroke-linejoin=\'round\'><polyline points=\'20 6 9 17 4 12\'/></svg>كيف نحمي بياناتك</h4><ul><li><b>لا نبيع</b> بياناتك ولا نشاركها مع أي طرف ثالث لأغراض تسويقية.</li><li>تأكيد الطلب يتم عبر واتساب مباشرةً معنا.</li></ul><h4><svg viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'currentColor\' stroke-width=\'2\' stroke-linecap=\'round\' stroke-linejoin=\'round\'><polyline points=\'20 6 9 17 4 12\'/></svg>ملفات تعريف الارتباط (Cookies)</h4><ul><li>نستخدمها لتحسين تجربتك وقياس فعالية إعلاناتنا عبر Meta Pixel.</li><li>لا تعمل هذه الملفات <b>إلّا بعد موافقتك</b> من شريط الكوكيز، ويمكنك رفضها في أي وقت.</li></ul><h4><svg viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'currentColor\' stroke-width=\'2\' stroke-linecap=\'round\' stroke-linejoin=\'round\'><polyline points=\'20 6 9 17 4 12\'/></svg>حقوقك</h4><ul><li>يمكنك طلب <b>الاطّلاع على بياناتك أو حذفها</b> في أي وقت بمراسلتنا عبر واتساب.</li></ul><div class="policy-note"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg><span>بياناتك تبقى بيننا وبينك فقط، وتُستخدم حصراً لخدمتك وإيصال طلبك.</span></div><div class="policy-updated">آخر تحديث: حزيران ٢٠٢٦</div>`}
@@ -1993,7 +1990,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   try{const s=localStorage.getItem('lcare-store-theme');if(s){document.documentElement.setAttribute('data-theme',s);themeIcon(s);}}catch(e){}
   $('heroIllu').innerHTML=heroSVG();$('whyIllu').innerHTML=whySVG();
   renderAnnounce();renderTrust();renderProds();renderWhy();renderConds();renderPlans();renderEdu();renderReviews();
-  updateCart();reveals();
+  updateCart();reveals();lcOpenFromHash();
   ['coName','coPhone','coGov','coAddr'].forEach(function(id){var el=$(id);if(!el)return;var clr=function(){el.classList.remove('invalid');};el.addEventListener('input',clr);el.addEventListener('change',clr);});
 });
 </script>
