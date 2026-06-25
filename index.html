@@ -638,6 +638,14 @@ section[id]{scroll-margin-top:80px}
 .modal-img img{width:100%;height:100%;object-fit:contain;padding:18px}
 .modal-illu{position:absolute;inset:0;display:grid;place-items:center;padding:44px}
 .modal-illu svg{width:72%;max-width:280px;filter:drop-shadow(0 20px 40px rgba(28,24,19,.12))}
+.mgal{position:absolute;inset:0;direction:ltr}
+.mgal-track{position:absolute;inset:0;display:flex;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.mgal-track::-webkit-scrollbar{display:none}
+.mgal-slide{flex:0 0 100%;scroll-snap-align:center;position:relative;display:grid;place-items:center}
+.mgal-dots{position:absolute;bottom:10px;left:0;right:0;display:flex;gap:6px;justify-content:center;z-index:3}
+.mgal-dot{width:7px;height:7px;border-radius:50%;border:0;background:rgba(0,0,0,.22);cursor:pointer;padding:0;transition:all .25s var(--e)}
+.mgal-dot.on{background:var(--teal);width:22px;border-radius:4px}
+.mgal-count{position:absolute;top:10px;right:10px;background:rgba(0,0,0,.5);color:#fff;font-size:11px;padding:3px 9px;border-radius:20px;font-weight:600;z-index:3;letter-spacing:.3px}
 .modal-body{padding:38px 34px}
 .modal-cat{font-size:12px;font-weight:600;color:var(--teal);margin-bottom:8px}
 .modal-name{font-family:var(--ft);font-weight:800;font-size:24px;line-height:1.25;color:var(--ink);margin-bottom:11px}
@@ -1466,7 +1474,7 @@ function showOrderOk(order,pm,waMsg){
 
 
 /* ════ DATA ════ */
-const PRODUCTS=[
+const PRODUCTS_SEED=[
   {id:'libre3',cat:'cgm',catName:'حساسات CGM',name:'FreeStyle Libre 3 Plus',price:125000,old:170000,rating:4.9,reviews:347,tag:'best',photo:'libre3.jpg',
    original:true,region:'نسخة الشرق الأوسط — عربية',noWarranty:true,bulkTiers:[{q:2,u:122500},{q:6,u:120000},{q:12,u:117500}],
    videos:[{label:'التركيب على هاتف أندرويد',id:'HA3NMBOX_T4',note:'يتطلب هاتفاً يدعم تقنية NFC'},{label:'التركيب على آيفون iOS',id:'Bdx4p0z_13c'},{label:'شرح إضافي للتركيب',id:'yB1vWRVKr4Y'}],
@@ -1601,6 +1609,7 @@ const PRODUCTS=[
   {id:'skintac-trial',cat:'protect',catName:'حماية الحساس',name:'Skin Tac — عبوة تجربة (٣ قطع)',price:5000,was:7500,hideGrid:true,addQty:1,short:'Skin Tac تجربة',addonNote:'جرّب تثبيت الحساس أثناء النوم والتعرّق',photo:'skintac.jpg',
    desc:'ثلاث مسحات Skin Tac لتجربة تثبيت الحساس — تكفي لحساس أو حساسين.',feats:['٣ مسحات Skin Tac','تثبيت أقوى','سعر تجربة خاص'],rel:['skintac','alcohol-gift']}
 ];
+let PRODUCTS=PRODUCTS_SEED;
 
 const WHY=[
   {ic:'check',t:'نستخدمها فعلاً مع مرضانا',d:'كل منتج هنا جرّبناه واخترناه لأنفسنا ولمرضانا — لا نبيع ما لا نثق به.'},
@@ -1723,7 +1732,17 @@ function cartProgressHTML(sub){
 /* ════ RENDER ════ */
 function renderAnnounce(){const a=['شحن مجاني للطلبات فوق 200,000 د.ع','منتجات أصلية بإشراف صيدلاني','خصم 5٪ لمشتركي LCARE','الدفع عند الاستلام','توصيل داخل العراق'];$('annTrack').innerHTML=[...a,...a].map(i=>`<span>${i}</span>`).join('');}
 function renderTrust(){const T=[['check','منتجات مختارة بعناية'],['heart','مناسبة لمرضى السكري'],['cart','دعم عبر واتساب'],['plane','توصيل داخل العراق'],['shield','توصيات من LCARE IQ']];$('trustBar').innerHTML=T.map(([i,t])=>`<div class="trust-it">${ic(i)}${t}</div>`).join('');}
-function imgOrIllu(p,cls){var _b=(p.photo||'').replace(/\.(jpe?g|png|webp)$/i,'');return `<img src="images/products/${_b}.webp" alt="${p.name}" loading="lazy" decoding="async" data-b="${_b}" onerror="if(this.dataset.j){this.style.display='none';this.nextElementSibling.style.display='grid';}else{this.dataset.j=1;this.src='images/products/'+this.dataset.b+'.jpg';}"><div class="${cls}" style="display:none">${pSVG(p)}</div>`;}
+/* ════ قاعدة البيانات (Supabase) + معرض الصور ════ */
+var SUPA_URL='https://fzddljgjdzbeeunvxopi.supabase.co';
+var SUPA_KEY='sb_publishable_z10_NjOSfTic_jXYsOi83w_oksPTi4h';
+function prodImgs(p){if(Array.isArray(p.images)&&p.images.length)return p.images;if(p.photo)return ['images/products/'+p.photo];return [];}
+function imgEl(src,alt,illuClass,illu){src=src||'';var rel=/^images\//.test(src);var base=src.replace(/\.(jpe?g|png|webp)$/i,'');var webp=rel?base+'.webp':src,jpg=rel?base+'.jpg':src;return '<img src="'+webp+'" alt="'+(alt||'')+'" loading="lazy" decoding="async" data-jpg="'+jpg+'" onerror="if(this.dataset.t){this.style.display=\'none\';this.nextElementSibling.style.display=\'grid\';}else{this.dataset.t=1;this.src=this.dataset.jpg;}"><div class="'+(illuClass||'')+'" style="display:none">'+(illu||'')+'</div>';}
+function mapRow(r){return {id:r.id,cat:r.cat,catName:r.cat_name,name:r.name,price:r.price,old:r.old_price,was:r.was,bulkTiers:r.bulk_tiers||[],box:r.box,gift:r.gift,giftWith:r.gift_with,giftLabel:r.gift_label,soon:r.soon,original:r.original,region:r.region,noWarranty:r.no_warranty,warrantyNote:r.warranty_note,rating:r.rating,reviews:r.reviews,fomo:r.fomo,short:r.short,tag:r.tag,cta:r.cta,desc:r.descr,who:r.who,why:r.why,how:r.how_to,feats:r.feats||[],videos:r.videos||[],rel:r.rel||[],images:r.images||[],addQty:r.add_qty,addonNote:r.addon_note,hideGrid:r.hide_grid};}
+function loadProducts(){var ctrl=new AbortController();var to=setTimeout(function(){ctrl.abort();},8000);return fetch(SUPA_URL+'/rest/v1/products?select=*&visible=eq.true&order=sort_order.asc',{headers:{apikey:SUPA_KEY,Authorization:'Bearer '+SUPA_KEY},signal:ctrl.signal}).then(function(r){clearTimeout(to);if(!r.ok)throw new Error('http '+r.status);return r.json();}).then(function(rows){if(!Array.isArray(rows)||!rows.length)throw new Error('empty');var m=rows.map(mapRow);try{localStorage.setItem('lc_products_cache',JSON.stringify(m));}catch(e){}return m;}).catch(function(e){clearTimeout(to);try{var c=JSON.parse(localStorage.getItem('lc_products_cache')||'null');if(c&&c.length)return c;}catch(_){}return PRODUCTS_SEED;});}
+function modalGallery(p){var imgs=prodImgs(p);if(imgs.length<=1)return imgEl(imgs[0]||'',p.name,'modal-illu',pSVG(p));var slides=imgs.map(function(s,i){return '<div class="mgal-slide">'+imgEl(s,p.name+' '+(i+1),'modal-illu',pSVG(p))+'</div>';}).join('');var dots=imgs.map(function(_,i){return '<button class="mgal-dot'+(i===0?' on':'')+'" onclick="mgalGo('+i+')" aria-label="صورة '+(i+1)+'"></button>';}).join('');return '<div class="mgal"><div class="mgal-track" id="mgalTrack" onscroll="mgalSync()" dir="ltr">'+slides+'</div><div class="mgal-count" id="mgalCount">1 / '+imgs.length+'</div><div class="mgal-dots">'+dots+'</div></div>';}
+function mgalGo(i){var t=$('mgalTrack');if(!t)return;t.scrollTo({left:i*t.clientWidth,behavior:'smooth'});}
+function mgalSync(){var t=$('mgalTrack');if(!t)return;var i=Math.round(t.scrollLeft/t.clientWidth);var d=document.querySelectorAll('.mgal-dot');d.forEach(function(x,n){x.classList.toggle('on',n===i);});var c=$('mgalCount');if(c)c.textContent=(i+1)+' / '+d.length;}
+function imgOrIllu(p,cls){return imgEl(prodImgs(p)[0],p.name,cls,pSVG(p));}
 function tagHTML(p){if(p.tag==='best')return '<span class="ptag best">الأكثر طلبًا</span>';if(p.tag==='rec')return '<span class="ptag rec">موصى به</span>';if(p.tag==='limited')return '<span class="ptag limited">كمية محدودة</span>';return '';}
 function prodCard(p,i){return `<div class="pcard rv d${(i%4)+1}${p.soon?' soon':''}" onclick="openModal('${p.id}')">
   <div class="pcard-media">${p.soon?'<span class="soon-badge">قريباً</span>':tagHTML(p)}${imgOrIllu(p,'pcard-illu')}
@@ -1873,7 +1892,7 @@ function updateCart(){cart=cart.filter(function(i){var p=PRODUCTS.find(function(
   const body=$('cartBody'),foot=$('cartFoot');
   if(!cart.length){body.innerHTML=`<div class="cart-empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg><p>سلتك فارغة</p><button class="btn btn-sec" onclick="go('featured')" style="font-size:13px;padding:11px 24px">تصفّح المنتجات</button></div>`;foot.style.display='none';var cpE=$('cartProgress');if(cpE)cpE.style.display='none';var caE=$('cartAddon');if(caE)caE.style.display='none';return;}
   foot.style.display='block';var cp=$('cartProgress');if(cp){cp.style.display='block';cp.innerHTML=cartProgressHTML(sub);}
-  body.innerHTML=cart.map(it=>{const p=PRODUCTS.find(x=>x.id===it.id);return `<div class="citem${(p&&p.gift)?' citem-isgift':''}"><div class="citem-img"><img src="images/products/${p?p.photo.replace(/\.[^.]+$/,'.webp'):''}" data-jpg="images/products/${p?p.photo:''}" loading="lazy" decoding="async" onerror="if(this.dataset.tried){this.style.display='none';this.nextElementSibling.style.display='block';}else{this.dataset.tried=1;this.src=this.dataset.jpg;}"><div style="display:none">${p?pSVG(p):''}</div></div><div class="citem-info"><div class="citem-cat">${it.catName}</div><h4>${it.name}</h4>${(p&&p.box&&it.qty>=p.box)?'<span class="citem-box">📦 صندوق</span>':''}${(p&&p.gift)?('<span class="citem-gift">🎁 '+(p.giftLabel||'هدية')+(it.qty>1?(' ×'+it.qty):'')+'</span>'):`<div class="citem-q"><button class="qbtn${it.qty===1?' qrm':''}" onclick="qtyCart('${it.id}',-1)" aria-label="${it.qty===1?'إزالة':'تقليل'}">${it.qty===1?ICTRASH:'−'}</button><span class="qval">${it.qty}</span><button class="qbtn" onclick="qtyCart('${it.id}',1)">+</button></div>`}</div><div><div class="citem-price${(p&&p.gift)?' free':''}">${(p&&p.gift)?'مجاناً':fmt(itemUnit(it)*it.qty)+' د.ع'}</div>${(p&&p.was&&p.was>p.price)?`<div class="citem-bulk">بدل ${fmt(p.was)} د.ع</div>`:''}${(p&&!p.gift&&unitPrice(p,it.qty)<p.price)?`<div class="citem-bulk">${fmt(unitPrice(p,it.qty))} للقطعة 🎉</div>`:''}<button class="citem-rm" onclick="rmCart('${it.id}')">${ICTRASH}<span>إزالة</span></button></div></div>`;}).join('');
+  body.innerHTML=cart.map(it=>{const p=PRODUCTS.find(x=>x.id===it.id);return `<div class="citem${(p&&p.gift)?' citem-isgift':''}"><div class="citem-img">${p?imgEl(prodImgs(p)[0],p.name,'',pSVG(p)):''}</div><div class="citem-info"><div class="citem-cat">${it.catName}</div><h4>${it.name}</h4>${(p&&p.box&&it.qty>=p.box)?'<span class="citem-box">📦 صندوق</span>':''}${(p&&p.gift)?('<span class="citem-gift">🎁 '+(p.giftLabel||'هدية')+(it.qty>1?(' ×'+it.qty):'')+'</span>'):`<div class="citem-q"><button class="qbtn${it.qty===1?' qrm':''}" onclick="qtyCart('${it.id}',-1)" aria-label="${it.qty===1?'إزالة':'تقليل'}">${it.qty===1?ICTRASH:'−'}</button><span class="qval">${it.qty}</span><button class="qbtn" onclick="qtyCart('${it.id}',1)">+</button></div>`}</div><div><div class="citem-price${(p&&p.gift)?' free':''}">${(p&&p.gift)?'مجاناً':fmt(itemUnit(it)*it.qty)+' د.ع'}</div>${(p&&p.was&&p.was>p.price)?`<div class="citem-bulk">بدل ${fmt(p.was)} د.ع</div>`:''}${(p&&!p.gift&&unitPrice(p,it.qty)<p.price)?`<div class="citem-bulk">${fmt(unitPrice(p,it.qty))} للقطعة 🎉</div>`:''}<button class="citem-rm" onclick="rmCart('${it.id}')">${ICTRASH}<span>إزالة</span></button></div></div>`;}).join('');
   var ca=$('cartAddon');if(ca){var ah=cartAddonHTML();ca.innerHTML=ah;ca.style.display=ah?'block':'none';}
   var ship=shipFee(sub), tot=sub+ship;
   $('cSub').textContent=fmt(sub)+' د.ع';$('cShip').textContent=ship===0?'✓ مجاني':fmt(ship)+' د.ع';$('cTot').textContent=fmt(tot)+' د.ع';
@@ -1934,7 +1953,7 @@ function buyDirect(id){const p=PRODUCTS.find(x=>x.id===id);if(!p)return;lcTrack(
 
 /* ════ MODAL ════ */
 function openModal(id){const p=PRODUCTS.find(x=>x.id===id);if(!p)return;mProd=p;mQty=1;
-  $('mImg').innerHTML=`<img src="images/products/${p.photo.replace(/\.[^.]+$/,'.webp')}" data-jpg="images/products/${p.photo}" alt="${p.name}" loading="lazy" decoding="async" onerror="if(this.dataset.tried){this.style.display='none';this.nextElementSibling.style.display='grid';}else{this.dataset.tried=1;this.src=this.dataset.jpg;}"><div class="modal-illu" style="display:none">${pSVG(p)}</div>`;
+  $('mImg').innerHTML=modalGallery(p);
   const rel=(p.rel||[]).map(r=>PRODUCTS.find(x=>x.id===r)).filter(Boolean).slice(0,3);
   $('mBody').innerHTML=`<div class="modal-cat">${p.catName}</div><h2 class="modal-name">${p.name}</h2>
     ${(p.original||p.region)?`<div class="modal-badges">${p.original?`<span class="mbadge orig"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> أصلي 100%</span>`:''}${p.region?`<span class="mbadge reg">${p.region}</span>`:''}</div>`:''}
@@ -1989,8 +2008,10 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape')closeAll();});
 document.addEventListener('DOMContentLoaded',()=>{
   try{const s=localStorage.getItem('lcare-store-theme');if(s){document.documentElement.setAttribute('data-theme',s);themeIcon(s);}}catch(e){}
   $('heroIllu').innerHTML=heroSVG();$('whyIllu').innerHTML=whySVG();
-  renderAnnounce();renderTrust();renderProds();renderWhy();renderConds();renderPlans();renderEdu();renderReviews();
-  updateCart();reveals();lcOpenFromHash();
+  renderAnnounce();renderTrust();renderWhy();renderConds();renderPlans();renderEdu();renderReviews();reveals();
+  try{var _c=JSON.parse(localStorage.getItem('lc_products_cache')||'null');if(_c&&_c.length)PRODUCTS=_c;}catch(e){}
+  renderProds();updateCart();lcOpenFromHash();
+  loadProducts().then(function(list){if(list&&list.length){PRODUCTS=list;renderProds();updateCart();lcOpenFromHash();}});
   ['coName','coPhone','coGov','coAddr'].forEach(function(id){var el=$(id);if(!el)return;var clr=function(){el.classList.remove('invalid');};el.addEventListener('input',clr);el.addEventListener('change',clr);});
 });
 </script>
