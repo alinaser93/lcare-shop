@@ -1036,6 +1036,7 @@ table.cmp thead th{background:var(--warm);vertical-align:top;padding:15px 7px 14
 .cmp-attr{text-align:right;font-weight:800;color:var(--ink);white-space:nowrap;font-size:12px;background:var(--warm)}
 .cmp-name{display:block;font-weight:800;color:var(--ink);font-size:13.5px;font-family:var(--ft);line-height:1.25}
 .cmp-price{display:block;margin-top:5px;color:var(--teal-d);font-weight:800;font-size:13px}
+.cmp-badge2{background:var(--teal)!important}
 .cmp-badge{display:inline-block;background:var(--teal);color:#fff;font-size:9px;font-weight:800;padding:3px 9px;border-radius:999px;margin-bottom:7px;letter-spacing:.2px}
 .cmp-best{background:var(--teal-pale)}
 td.cmp-best{font-weight:800;color:var(--ink)}
@@ -1139,36 +1140,40 @@ thead th.cmp-best{background:var(--teal-soft)}
 <!-- CGM COMPARE -->
 <section class="sec cmp-sec" id="compare">
   <div class="wrap">
-    <div class="shead rv"><span class="eye">أيّهم تختار؟</span><h2>قارن الحساسات الثلاثة</h2><p>كل حساس له ميزته — اختر ما يناسب حياتك وميزانيتك بثقة</p></div>
+    <div class="shead rv"><span class="eye">أيّهم تختار؟</span><h2>قارن حساساتنا الخمسة</h2><p>كل حساس له ميزته — اختر ما يناسب حياتك وميزانيتك بثقة</p></div>
     <div class="cmp-scroll rv">
       <table class="cmp">
         <thead>
           <tr>
             <th class="cmp-attr"></th>
-            <th class="cmp-best"><span class="cmp-badge">الأعلى دقة</span><span class="cmp-name">FreeStyle<br>Libre 3 Plus</span><span class="cmp-price">125,000 د.ع</span></th>
-            <th><span class="cmp-name">FreeStyle<br>Libre 2</span><span class="cmp-price">110,000 د.ع</span></th>
-            <th><span class="cmp-name">Sibionics<br>GS1</span><span class="cmp-price">85,000 د.ع</span></th>
+            <th class="cmp-best"><span class="cmp-badge">الأعلى دقة</span><span class="cmp-name">Libre 3<br>Plus</span><span class="cmp-price">125,000 د.ع</span></th>
+            <th><span class="cmp-badge cmp-badge2">جديد</span><span class="cmp-name">Libre 2<br>Plus</span><span class="cmp-price">105,000 د.ع</span></th>
+            <th><span class="cmp-name">Libre 2</span><span class="cmp-price">100,000 د.ع</span></th>
+            <th><span class="cmp-name">Sibionics<br>GS1</span><span class="cmp-price">80,000 د.ع</span></th>
+            <th><span class="cmp-badge cmp-badge2">الأوفر</span><span class="cmp-name">Sibionics<br>صيني</span><span class="cmp-price">65,000 د.ع</span></th>
           </tr>
         </thead>
         <tbody>
-          <tr><th class="cmp-attr">المدة</th><td class="cmp-best">١٥ يوم</td><td>١٤ يوم</td><td>١٤ يوم</td></tr>
-          <tr><th class="cmp-attr">القراءة</th><td class="cmp-best">بلوتوث تلقائي</td><td>مسح يدوي NFC</td><td>بلوتوث تلقائي</td></tr>
-          <tr><th class="cmp-attr">الدقة (MARD)</th><td class="cmp-best">٧.٩٪ ⭐</td><td>٩.٢٪</td><td>٨.٨٪</td></tr>
-          <tr><th class="cmp-attr">مقاوم للماء</th><td class="cmp-best">✓</td><td>✓</td><td>✓ IP28</td></tr>
-          <tr><th class="cmp-attr">معايرة مصنعية</th><td class="cmp-best">✓</td><td>✓</td><td>✓</td></tr>
-          <tr><th class="cmp-attr">الأنسب لِـ</th><td class="cmp-best">أعلى دقة وأقصى راحة</td><td>موازنة السعر والدقة</td><td>الأوفر سعراً</td></tr>
+          <tr><th class="cmp-attr">المدة</th><td class="cmp-best">١٥ يوم</td><td>١٥ يوم</td><td>١٤ يوم</td><td>١٤ يوم</td><td>٢٤ يوم ⭐</td></tr>
+          <tr><th class="cmp-attr">الدقة (MARD)</th><td class="cmp-best">٧.٩٪ ⭐</td><td>~٨.٢٪</td><td>٩.٣٪</td><td>٨.٨٪</td><td>٨.٨٪</td></tr>
+          <tr><th class="cmp-attr">القراءة</th><td class="cmp-best">بلوتوث تلقائي</td><td>تلقائي + مسح NFC</td><td>تلقائي + مسح NFC</td><td>بلوتوث تلقائي</td><td>بلوتوث تلقائي</td></tr>
+          <tr><th class="cmp-attr">يدعم آيفون</th><td class="cmp-best">✓</td><td>✓</td><td>✓</td><td>✓</td><td>✗ أندرويد فقط</td></tr>
+          <tr><th class="cmp-attr">الكلفة اليومية</th><td class="cmp-best">~٨,٣٠٠</td><td>~٧,٠٠٠</td><td>~٧,١٠٠</td><td>~٥,٧٠٠</td><td>~٢,٧٠٠ ⭐</td></tr>
+          <tr><th class="cmp-attr">الأنسب لِـ</th><td class="cmp-best">أعلى دقة وأقصى راحة</td><td>ترقية ذكية من ليبري ٢</td><td>الموثوق المجرَّب</td><td>متابعة عائلية بسعر جيد</td><td>أطول عمر وأوفر كلفة</td></tr>
         </tbody>
         <tfoot>
           <tr>
             <td class="cmp-attr"></td>
             <td class="cmp-best"><button class="cmp-btn" onclick="openModal('libre3')">التفاصيل</button></td>
+            <td><button class="cmp-btn" onclick="openModal('libre2plus')">التفاصيل</button></td>
             <td><button class="cmp-btn" onclick="openModal('libre2')">التفاصيل</button></td>
             <td><button class="cmp-btn" onclick="openModal('dexcom7')">التفاصيل</button></td>
+            <td><button class="cmp-btn" onclick="openModal('sibionics-cn')">التفاصيل</button></td>
           </tr>
         </tfoot>
       </table>
     </div>
-    <p class="cmp-note">جميع الحساسات أصلية ومعايَرة من المصنع وبإشراف صيدلاني. قيمة الدقة (MARD) — كلما قلّت كانت الدقة أعلى. القراءة قد تختلف قليلاً بين الأفراد؛ يُنصح بفحص الإصبع عند الشكّ.</p>
+    <p class="cmp-note">جميع الحساسات أصلية ومعايَرة من المصنع وبإشراف صيدلاني. قيمة الدقة (MARD) — كلما قلّت كانت الدقة أعلى. الكلفة اليومية = السعر ÷ أيام العمر (تقريبية). القراءة قد تختلف قليلاً بين الأفراد؛ يُنصح بفحص الإصبع عند الشكّ.</p>
   </div>
 </section>
 
