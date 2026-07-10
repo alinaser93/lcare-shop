@@ -635,7 +635,7 @@ section[id]{scroll-margin-top:80px}
 .modal.on .modal-card{transform:scale(1)}
 .modal-x{position:absolute;top:15px;left:15px;z-index:3}
 .modal-img{background:linear-gradient(155deg,var(--warm),var(--paper));display:grid;place-items:center;min-height:300px;max-height:400px;position:relative;overflow:hidden}
-.modal-img img{width:100%;height:100%;object-fit:contain;padding:18px}
+.modal-img img{width:100%;height:100%;object-fit:contain;padding:10px}
 .modal-illu{position:absolute;inset:0;display:grid;place-items:center;padding:44px}
 .modal-illu svg{width:72%;max-width:280px;filter:drop-shadow(0 20px 40px rgba(28,24,19,.12))}
 .mgal{position:absolute;inset:0;direction:ltr}
@@ -671,7 +671,7 @@ section[id]{scroll-margin-top:80px}
 .modal-wa{width:50px;height:50px;border:none;border-radius:13px;background:var(--green);color:#fff;display:grid;place-items:center;transition:all .3s var(--e)}
 .modal-wa:hover{background:#1eb858;transform:scale(1.05)}
 .modal-wa svg{width:22px;height:22px}
-@media(max-width:720px){.modal-card{grid-template-columns:1fr;max-height:94vh}.modal-img{min-height:220px;max-height:320px}.modal-body{padding:28px 22px}}
+@media(max-width:720px){.modal-card{grid-template-columns:1fr;max-height:94vh}.modal-img{min-height:300px;max-height:420px}.modal-body{padding:28px 22px}}
 .modal-badges{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:13px}
 .mbadge{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:700;padding:6px 12px;border-radius:100px}
 .mbadge svg{width:13px;height:13px}
@@ -1957,7 +1957,7 @@ function openModal(id){const p=PRODUCTS.find(x=>x.id===id);if(!p)return;mProd=p;
   const rel=(p.rel||[]).map(r=>PRODUCTS.find(x=>x.id===r)).filter(Boolean).slice(0,3);
   $('mBody').innerHTML=`<div class="modal-cat">${p.catName}</div><h2 class="modal-name">${p.name}</h2>
     ${(p.original||p.region)?`<div class="modal-badges">${p.original?`<span class="mbadge orig"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> أصلي 100%</span>`:''}${p.region?`<span class="mbadge reg">${p.region}</span>`:''}</div>`:''}
-    <div class="modal-rate"><span class="stars">${'★'.repeat(Math.round(p.rating))}</span><strong>${p.rating}</strong> · ${p.reviews} تقييم</div>
+    ${p.rating?`<div class="modal-rate"><span class="stars">${'★'.repeat(Math.round(p.rating))}</span><strong>${p.rating}</strong>${p.reviews?` · ${p.reviews} تقييم`:''}</div>`:''}
     ${p.fomo?`<div class="modal-fomo"><span class="dot"></span>${p.fomo}</div>`:''}
     ${p.soon?`<div class="modal-price soon"><span class="soon-price-lg">يتوفّر قريباً</span></div><div class="modal-soon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg> قريباً جداً — كن أوّل من يحصل عليه فور توفّره</div>`:`<div class="modal-price"><b>${fmt(p.price)}</b><small>د.ع</small>${p.old?`<span class="old">${fmt(p.old)} د.ع</span>`:''}</div>`}
     <div class="mtrust"><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg> دفع عند الاستلام</span><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l7 4v6c0 4-3 7-7 8-4-1-7-4-7-8V6z"/><polyline points="9 12 11 14 15 10"/></svg> أصلي ومضمون</span><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="6" width="13" height="11" rx="1"/><path d="M14 9h4l3 3v5h-7z"/><circle cx="6" cy="18" r="2"/><circle cx="18" cy="18" r="2"/></svg> توصيل ١–٣ أيام</span></div>
