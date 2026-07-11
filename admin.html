@@ -197,6 +197,17 @@ input,select,textarea,button{font-family:inherit}
 .cost-inline{width:92px;padding:7px 9px;border:1.5px solid var(--gold);border-radius:8px;font-size:13px;font-weight:700;background:#fffdf7;text-align:center;color:var(--ink)}
 .cost-inline:focus{outline:none;border-color:var(--teal);background:#fff}
 .cost-inline::placeholder{color:var(--ink-m);font-weight:400;font-size:11px}
+.an-box{background:#fff;border:1px solid var(--line);border-radius:13px;padding:14px 16px}
+.an-bar{display:flex;align-items:center;gap:10px;margin:7px 0}
+.an-bar .nm{width:82px;font-size:12.5px;font-weight:700;color:var(--ink-s);flex:0 0 auto}
+.an-bar .tr{flex:1;height:20px;background:var(--cream);border-radius:10px;overflow:hidden}
+.an-bar .fl{height:100%;background:linear-gradient(90deg,var(--teal),var(--teal-d));border-radius:10px;min-width:4px}
+.an-bar .v{font-size:12px;font-weight:800;color:var(--ink);width:30px;text-align:left;flex:0 0 auto}
+.aud-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:11px}
+.aud-card{background:#fff;border:1px solid var(--line);border-radius:13px;padding:15px}
+.aud-card b{font-size:14px;display:block}
+.aud-card small{font-size:11.5px;color:var(--ink-m);display:block;margin:4px 0 10px;line-height:1.6}
+.aud-card .n{font-size:11px;color:var(--teal-d);font-weight:800}
 .orow-actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center;border-top:1px dashed var(--line);padding-top:10px}
 .orow-actions select{padding:8px 10px;border:1px solid var(--line);border-radius:9px;font-size:12.5px;background:var(--paper);font-weight:600}
 .chk-lg{width:18px;height:18px;accent-color:var(--teal);cursor:pointer;flex:0 0 auto}
@@ -251,6 +262,7 @@ input,select,textarea,button{font-family:inherit}
       <button class="btn btn-teal" onclick="openEditor(null)">＋ منتج جديد</button>
       <button class="btn" onclick="reload()">🔄 تحديث</button>
       <a class="btn" href="index.html" target="_blank">👁 المتجر</a>
+      <button class="btn" onclick="openSettings()" title="إعدادات الرسائل">⚙️</button>
       <button class="btn" onclick="doLogout()">خروج</button>
     </div>
   </div>
@@ -258,6 +270,7 @@ input,select,textarea,button{font-family:inherit}
   <div class="tabs">
     <button class="tab on" id="tabProducts" onclick="switchTab('products')">🛍 المنتجات</button>
     <button class="tab" id="tabOrders" onclick="switchTab('orders')">📦 الطلبات <span class="cnt" id="newCnt" style="display:none">0</span></button>
+    <button class="tab" id="tabReminders" onclick="switchTab('reminders')">⏰ تذكيرات <span class="cnt" id="remCnt" style="display:none">0</span></button>
     <button class="tab" id="tabProfits" onclick="switchTab('profits')">📊 الأرباح</button>
   </div>
 
@@ -305,6 +318,21 @@ input,select,textarea,button{font-family:inherit}
     </div>
   </div>
 
+  <div id="viewReminders" style="display:none">
+    <div class="ostats">
+      <div class="ostat"><b id="rmDue">0</b><span>يقارب الانتهاء</span></div>
+      <div class="ostat"><b id="rmOver" style="color:var(--red)">0</b><span>متأخرون عن التجديد</span></div>
+      <div class="ostat"><b id="rmWait">0</b><span>بانتظار الرد</span></div>
+    </div>
+    <h3 class="prof-h" style="margin-top:6px">⏰ تذكيرات اليوم <span style="font-weight:400;font-size:12px;color:var(--ink-m)">— حساسهم ينتهي خلال يومين</span></h3>
+    <div id="remDueList"></div>
+    <div style="margin-top:18px">
+      <button class="btn btn-sm" id="overToggle" onclick="toggleOverdue()" style="width:100%;justify-content:center;display:flex;gap:8px">🔴 المتأخرون عن التجديد (<span id="overN">0</span>) — اضغط للعرض</button>
+      <div id="remOverList" style="display:none;margin-top:12px"></div>
+    </div>
+    <p class="prof-note">💡 يُحسب انتهاء الحساس تلقائياً (ليبري ٢: ١٤ يوم · ٢ بلس و٣ بلس: ١٥ · GS1: ١٤ · الصيني: ٢٤) من تاريخ الطلب. يُستثنى تلقائياً كل من جدّد (له طلب «مشترٍ» أحدث بنفس الهاتف) أو عُلّم «لم يجدد». زر ✅ ينشئ طلب تجديد فوراً ويطلق حدث الشراء لفيسبوك.</p>
+  </div>
+
   <div id="viewProfits" style="display:none">
     <div class="prof-setting">
       <span>💵 تكلفة التوصيل الفعلية (تدفعها لشركة التوصيل):</span>
@@ -321,6 +349,20 @@ input,select,textarea,button{font-family:inherit}
     <div class="prof-table-wrap"><table class="prof-table" id="profTopTable"></table></div>
     <h3 class="prof-h">📈 هامش الربح لكل منتج</h3>
     <div class="prof-table-wrap"><table class="prof-table" id="profMarginTable"></table></div>
+
+    <h3 class="prof-h">🗺 أكثر المحافظات شراءً</h3>
+    <div id="anCities" class="an-box"></div>
+
+    <div class="prof-cards" id="anCards" style="margin-top:16px"></div>
+
+    <h3 class="prof-h">🏆 أفضل الزبائن (الأكثر ولاءً)</h3>
+    <div class="prof-table-wrap"><table class="prof-table" id="anTopCust"></table></div>
+
+    <h3 class="prof-h">⚠️ زبائن في خطر <span style="font-weight:400;font-size:12px;color:var(--ink-m)">— اشتروا سابقاً وانتهى حساسهم منذ أكثر من شهر ولم يعودوا</span></h3>
+    <div id="anAtRisk"></div>
+
+    <h3 class="prof-h">📣 جماهير Meta المخصصة <span style="font-weight:400;font-size:12px;color:var(--ink-m)">— CSV جاهز للرفع في Ads Manager</span></h3>
+    <div class="aud-grid" id="anAudiences"></div>
     <p class="prof-note">💡 <b>أدخل «سعر الجملة» مباشرةً في الجدول أعلاه</b> — اكتب تكلفتك في الخانة الصفراء لكل منتج وستُحفظ فوراً وتُحسب الأرباح تلقائياً. الربح الصافي = الإيراد − سعر الجملة − تكلفة التوصيل (من الطلبات المعلّمة «مشترٍ» فقط). أسعار الجملة سرّية ولا تظهر للزبائن إطلاقاً.</p>
   </div>
 </div>
@@ -337,6 +379,26 @@ input,select,textarea,button{font-family:inherit}
     <div class="editor-foot">
       <button class="btn" onclick="closeEditor()">إلغاء</button>
       <button class="btn btn-teal" id="saveBtn" onclick="saveProduct()">حفظ المنتج</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="ovSettings" onclick="closeSettings()"></div>
+<div class="editor" id="settingsEditor">
+  <div class="editor-card">
+    <div class="editor-hd">
+      <h2>⚙️ إعدادات الرسائل</h2>
+      <button class="x" onclick="closeSettings()">✕</button>
+    </div>
+    <div class="editor-body">
+      <div class="field"><label>🛒 رابط المتجر</label><input id="cf_website" placeholder="https://store.lcareiq.com"></div>
+      <div class="field"><label>🛵 رقم مندوب التوصيل</label><input id="cf_courier" placeholder="+964..." inputmode="tel"></div>
+      <div class="field"><label>⚠️ نص إخلاء المسؤولية <span class="hint">يظهر في رسالة تأكيد الزبون</span></label><textarea id="cf_disclaimer" rows="3" style="width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:9px;font-size:13.5px;background:var(--paper);font-family:inherit"></textarea></div>
+      <div class="field"><label>📲 رابط تطبيق سيبايونكس <span class="hint">اختياري — إن مُلئ يُضاف سطر التطبيق لرسائل طلبات سيبايونكس</span></label><input id="cf_app" placeholder="https://..."></div>
+    </div>
+    <div class="editor-foot">
+      <button class="btn" onclick="closeSettings()">إلغاء</button>
+      <button class="btn btn-teal" onclick="saveSettings()">حفظ الإعدادات</button>
     </div>
   </div>
 </div>
@@ -718,6 +780,54 @@ async function delProduct(id){
 
 /* ══════════ الطلبات ══════════ */
 window.LC_CAPI='/.netlify/functions/capi';
+
+/* ══════════ الإعدادات + مدد الحساسات + الرسائل ══════════ */
+const CFG_DEF={website:'https://store.lcareiq.com',courier:'+9647830040070',disclaimer:'هذا الحساس لا يشمل أي ضمان صيانة أو استبدال — راجع فيديو التركيب في الرابط أعلاه لضمان التركيب الصحيح.',appSibionics:''};
+function cfg(){try{var c=JSON.parse(localStorage.getItem('lc_admin_cfg')||'{}');var o={};for(var k in CFG_DEF)o[k]=(c[k]&&(''+c[k]).trim())?c[k]:CFG_DEF[k];return o;}catch(e){return Object.assign({},CFG_DEF);}}
+const SENSOR_DUR={libre2:14,libre2plus:15,libre3:15,dexcom7:14,'sibionics-cn':24};
+function orderSensor(o){ /* أبعد حساس في الطلب: {pid,name,days,expiry} أو null */
+  var best=null, ts=oTs(o);
+  (o.items||[]).forEach(function(it){
+    var d=SENSOR_DUR[it.id]; if(!d)return;
+    var exp=ts+d*86400000;
+    if(!best||exp>best.expiry)best={pid:it.id,name:it.name,days:d,expiry:exp};
+  });
+  return best;
+}
+function dLeft(expiry){return Math.ceil((expiry-Date.now())/86400000);}
+function fmtD(ts){return new Date(ts).toLocaleDateString('ar-IQ',{year:'numeric',month:'long',day:'numeric'});}
+function orderItemsTxt(o){return (o.items&&o.items.length)?o.items.map(function(i){return i.name+' ×'+i.qty;}).join(' + '):(o.products||'');}
+function genCustomerMsg(o){
+  var C=cfg(), sn=orderSensor(o);
+  var free=(o.shipping===0);
+  var sensorIds=(o.items||[]).filter(function(i){return SENSOR_DUR[i.id];}).map(function(i){return i.id;});
+  var vids=sensorIds.map(function(id){return C.website+'/#'+id;}).join('\n');
+  var hasSib=sensorIds.some(function(id){return id.indexOf('sibionics')>=0||id==='dexcom7';});
+  var appLine=(hasSib&&C.appSibionics)?('\n📲 أولاً، حمّل تطبيق الجهاز من هنا قبل التركيب:\n'+C.appSibionics+'\n'):'';
+  var m='مرحباً '+(o.name||'')+' 👋\nتم تأكيد طلبكم من LCARE IQ ✅\n\n🔹 المنتجات: '+orderItemsTxt(o)+'\n🔹 الإجمالي: '+fmt(o.total||0)+' د.ع'+(free?' (توصيل مجاني 🎁)':'')+'\n🔹 العنوان: '+((o.gov||'')+' - '+(o.addr||''))+'\n\n🚚 سيصل الطلب خلال ٢٤-٤٨ ساعة.\n'+appLine;
+  if(vids)m+='\n📺 طريقة التركيب (مهم جداً):\nلضمان نجاح التركيب وعدم خسارة الجهاز، يُرجى الدخول لرابط المنتج والنزول لأسفل الصفحة لمشاهدة (فيديو شرح التركيب) قبل فتح العلبة:\n'+vids+'\n\n⚠️ بدون ضمان: '+C.disclaimer+'\n';
+  if(sn)m+='\n📅 ينتهي الحساس بتاريخ '+fmtD(sn.expiry)+' — وسنذكّرك قبلها للتجديد.\n';
+  m+='\n🛒 للطلب مستقبلاً مباشرةً من متجرنا:\n'+C.website+'\n\nشكراً لثقتكم 💚 LCARE IQ';
+  return m;
+}
+function genDeliveryMsg(o){
+  var free=(o.shipping===0);
+  return '📦 طلب جديد - LCARE IQ\n━━━━━━━━━━━━━━\n👤 الزبون: '+(o.name||'')+'\n📱 الهاتف: '+(o.phone_raw||o.phone||'')+'\n📍 العنوان: '+((o.gov||'')+' - '+(o.addr||''))+'\n🧊 المنتجات: '+orderItemsTxt(o)+'\n💰 المبلغ المستلَم من الزبون: '+fmt(o.total||0)+' د.ع\n   '+(free?'(التوصيل مجاني 🎁)':('(منه '+fmt(o.shipping||0)+' د.ع توصيل)'))+(o.notes?('\n📝 ملاحظة: '+o.notes):'')+'\n━━━━━━━━━━━━━━';
+}
+function genReminderMsg(o,sn){
+  var C=cfg(), dl=dLeft(sn.expiry);
+  var when = dl>1?('بعد '+dl+' أيام'):(dl===1?'غداً':(dl===0?'اليوم':'قبل '+Math.abs(dl)+' يوم'));
+  return 'مرحباً '+(o.name||'')+' 👋\nمن LCARE IQ - نذكّرك بأن حساس ('+sn.name+') الخاص بك '+(dl>=0?('ينتهي '+when+' ('+fmtD(sn.expiry)+')'):('انتهى '+when))+'.\n\nهل تودّ حجز الحساس الجديد الآن؟ 💚\n\n🛒 اطلب مباشرة من متجرنا:\n'+C.website+'/#'+sn.pid;
+}
+function waTo(phone,msg){var ph=(''+(phone||'')).replace(/\D/g,'');if(ph.charAt(0)==='0')ph='964'+ph.slice(1);else if(ph.indexOf('964')!==0)ph='964'+ph;window.open('https://wa.me/'+ph+'?text='+encodeURIComponent(msg),'_blank');}
+function openSettings(){var C=cfg();$('cf_website').value=C.website;$('cf_courier').value=C.courier;$('cf_disclaimer').value=C.disclaimer;$('cf_app').value=C.appSibionics||'';$('ovSettings').classList.add('on');$('settingsEditor').classList.add('on');document.body.style.overflow='hidden';}
+function closeSettings(){$('ovSettings').classList.remove('on');$('settingsEditor').classList.remove('on');document.body.style.overflow='';}
+function saveSettings(){
+  var c={website:$('cf_website').value.trim(),courier:$('cf_courier').value.trim(),disclaimer:$('cf_disclaimer').value.trim(),appSibionics:$('cf_app').value.trim()};
+  localStorage.setItem('lc_admin_cfg',JSON.stringify(c));
+  toast('حُفظت الإعدادات ✓','ok');closeSettings();
+}
+
 let ORDERS=[], oFilter='all', curTab='products';
 var COSTS={};            /* {id: سعر الجملة} — سرّي */
 function shipCost(){return parseInt(localStorage.getItem('lc_ship_cost')||'5000',10)||0;}
@@ -732,11 +842,14 @@ function switchTab(t){
   curTab=t;
   $('tabProducts').classList.toggle('on',t==='products');
   $('tabOrders').classList.toggle('on',t==='orders');
+  $('tabReminders').classList.toggle('on',t==='reminders');
   $('tabProfits').classList.toggle('on',t==='profits');
   $('viewProducts').style.display=t==='products'?'block':'none';
   $('viewOrders').style.display=t==='orders'?'block':'none';
+  $('viewReminders').style.display=t==='reminders'?'block':'none';
   $('viewProfits').style.display=t==='profits'?'block':'none';
   if(t==='orders'&&!ORDERS.length)loadOrders();
+  if(t==='reminders')renderReminders();
   if(t==='profits')renderProfits();
 }
 async function loadOrders(){
@@ -766,6 +879,7 @@ function renderOrders(){
   $('stPend').textContent=pend;
   $('stRev').textContent=fmt(ORDERS.filter(function(o){return o.status==='bought';}).reduce(function(s,o){return s+(o.total||0);},0));
   var nc=$('newCnt');nc.textContent=pend;nc.style.display=pend?'inline-grid':'none';
+  try{var RL=reminderLists();var rc=RL.due.length+RL.over.length;var rb=$('remCnt');rb.textContent=rc;rb.style.display=rc?'inline-grid':'none';}catch(e){}
   // القائمة
   var list=oFiltered();
   if(!list.length){$('olist').innerHTML='<div class="empty">لا توجد طلبات مطابقة</div>';updateBulk();return;}
@@ -797,6 +911,7 @@ function renderOrders(){
       +Object.keys(O_ST).map(function(k){return '<option value="'+k+'"'+(o.status===k?' selected':'')+'>'+O_ST[k]+'</option>';}).join('')
       +'</select>'
       +'<button class="btn btn-sm" onclick="waOrder(\''+esc(o.id)+'\')">💬 واتساب</button>'
+      +'<button class="btn btn-sm" onclick="waCourier(\''+esc(o.id)+'\')">🛵 المندوب</button>'
       +'<button class="btn btn-sm btn-red" onclick="delOrder(\''+esc(o.id)+'\')">🗑</button>'
       +(o.status==='bought'&&o.purchase_fired?'<span style="font-size:11px;color:var(--green);font-weight:700">✓ حدث الشراء أُرسل لميتا</span>':'')
       +'</div></div>';
@@ -829,11 +944,11 @@ function firePurchase(o){
 }
 function waOrder(id){
   var o=ORDERS.find(function(x){return x.id===id;});if(!o)return;
-  var ph=(o.phone_raw||o.phone||'').replace(/\D/g,'');
-  if(ph.charAt(0)==='0')ph='964'+ph.slice(1);else if(ph.indexOf('964')!==0)ph='964'+ph;
-  var itemsTxt=o.products||((o.items||[]).map(function(i){return i.name+' ×'+i.qty;}).join(' | '));
-  var m='السلام عليكم '+(o.name||'')+'،\nبخصوص طلبك من متجر LCARE IQ:\n'+itemsTxt+'\nالمجموع: '+fmt(o.total||0)+' د.ع\n\nنود تأكيد طلبك 🌹';
-  window.open('https://wa.me/'+ph+'?text='+encodeURIComponent(m),'_blank');
+  waTo(o.phone_raw||o.phone, genCustomerMsg(o));
+}
+function waCourier(id){
+  var o=ORDERS.find(function(x){return x.id===id;});if(!o)return;
+  waTo(cfg().courier, genDeliveryMsg(o));
 }
 async function delOrder(id){
   if(!confirm('حذف هذا الطلب نهائياً؟'))return;
@@ -1026,6 +1141,61 @@ function renderProfits(){
       var pu=pr-c, mg=pr?Math.round(pu/pr*100):0;
       return '<tr><td>'+esc(p.name)+'</td><td>'+ci+'</td><td>'+fmt(pr)+'</td><td style="color:#1f9d57;font-weight:700">'+fmt(pu)+'</td><td style="font-weight:800;color:'+(mg>=0?'#1f9d57':'var(--red)')+'">'+mg+'%</td></tr>';
     }).join('');
+  renderAnalytics();
+}
+/* ══════════ التحليلات + جماهير Meta ══════════ */
+function custMap(){ /* {phone:{name,email,gov,count,revenue,lastTs,lastSensorExpiry}} من المشترين */
+  var m={};
+  ORDERS.forEach(function(o){
+    if(o.status!=='bought'||!o.phone)return;
+    var c=m[o.phone]||(m[o.phone]={phone:o.phone,phoneRaw:o.phone_raw||o.phone,name:o.name||'',email:o.email||'',gov:o.gov||'',count:0,revenue:0,lastTs:0,lastExpiry:0});
+    c.count++;c.revenue+=(o.total||0);
+    var t=oTs(o);if(t>c.lastTs){c.lastTs=t;c.name=o.name||c.name;c.gov=o.gov||c.gov;}
+    var sn=orderSensor(o);if(sn&&sn.expiry>c.lastExpiry)c.lastExpiry=sn.expiry;
+  });
+  return m;
+}
+function renderAnalytics(){
+  var bought=ORDERS.filter(function(o){return o.status==='bought';});
+  var cm=custMap(), custs=Object.keys(cm).map(function(k){return cm[k];});
+  /* المحافظات */
+  var gv={};bought.forEach(function(o){var g=(o.gov||'غير محدد').trim()||'غير محدد';gv[g]=(gv[g]||0)+1;});
+  var cities=Object.keys(gv).map(function(k){return {g:k,n:gv[k]};}).sort(function(a,b){return b.n-a.n;}).slice(0,7);
+  var mx=cities.length?cities[0].n:1;
+  $('anCities').innerHTML=cities.length?cities.map(function(c){return '<div class="an-bar"><span class="nm">'+esc(c.g)+'</span><div class="tr"><div class="fl" style="width:'+Math.round(c.n/mx*100)+'%"></div></div><span class="v">'+c.n+'</span></div>';}).join(''):'<div style="color:var(--ink-m);font-size:13px">لا بيانات بعد</div>';
+  /* بطاقات: معدل التجديد + أفضل يوم + متوسط قيمة الزبون */
+  var repeat=custs.filter(function(c){return c.count>=2;}).length;
+  var rr=custs.length?Math.round(repeat/custs.length*100):0;
+  var days=['الأحد','الاثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'],dv=[0,0,0,0,0,0,0];
+  bought.forEach(function(o){dv[new Date(oTs(o)).getDay()]++;});
+  var bd=dv.indexOf(Math.max.apply(null,dv));
+  var avg=custs.length?Math.round(custs.reduce(function(s,c){return s+c.revenue;},0)/custs.length):0;
+  $('anCards').innerHTML=profCard('🔁','معدل التجديد',rr+'%',rr>=30?'#1f9d57':'var(--amber)')+profCard('📅','أفضل يوم للبيع',bought.length?days[bd]:'—','var(--ink)')+profCard('👤','متوسط قيمة الزبون',fmt(avg),'var(--teal-d)');
+  /* أفضل الزبائن */
+  var top=custs.slice().sort(function(a,b){return b.count-a.count||b.revenue-a.revenue;}).slice(0,5);
+  $('anTopCust').innerHTML='<tr><th>الزبون</th><th>الهاتف</th><th>مشتريات</th><th>الإجمالي</th></tr>'+(top.length?top.map(function(c){return '<tr><td>'+esc(c.name)+'</td><td style="direction:ltr;text-align:right">'+esc(c.phoneRaw)+'</td><td>'+c.count+'</td><td style="font-weight:700;color:var(--teal-d)">'+fmt(c.revenue)+'</td></tr>';}).join(''):'<tr><td colspan="4" style="text-align:center;color:var(--ink-m);padding:14px">لا بيانات بعد</td></tr>');
+  /* زبائن في خطر: انتهى حساسهم منذ >30 يوم ولم يعودوا */
+  var risk=custs.filter(function(c){return c.lastExpiry&&(Date.now()-c.lastExpiry)>30*86400000;}).sort(function(a,b){return b.revenue-a.revenue;}).slice(0,8);
+  $('anAtRisk').innerHTML=risk.length?risk.map(function(c){var d=Math.floor((Date.now()-c.lastExpiry)/86400000);return '<div class="orow"><div class="orow-top"><div class="who"><b>'+esc(c.name)+'</b><small>انتهى حساسه قبل '+d+' يوم · '+c.count+' مشتريات سابقة</small></div><button class="btn btn-sm" onclick="waRisk(\''+esc(c.phone)+'\')">💬 تواصل</button></div></div>';}).join(''):'<div class="an-box" style="color:var(--ink-m);font-size:13px">لا زبائن في خطر حالياً 🎉</div>';
+  /* الجماهير */
+  var over=reminderLists().over.map(function(r){return r.o.phone;});
+  var segs=[
+    {id:'all',ic:'👥',label:'كل المشترين',desc:'ارفعه في Meta واعمل منه Lookalike — ميتا تجد من يشبههم',list:custs},
+    {id:'overdue',ic:'⏰',label:'المتأخرون عن التجديد',desc:'أعد استهدافهم بإعلان تذكير/عرض تجديد',list:custs.filter(function(c){return over.indexOf(c.phone)>=0||(c.lastExpiry&&Date.now()>c.lastExpiry&&(Date.now()-c.lastExpiry)<=90*86400000);})},
+    {id:'vip',ic:'👑',label:'أفضل الزبائن (VIP)',desc:'اشتروا مرتين فأكثر — عروض حصرية',list:custs.filter(function(c){return c.count>=2;})},
+    {id:'once',ic:'1️⃣',label:'اشتروا مرة واحدة',desc:'حفّزهم للعودة بعرض خاص',list:custs.filter(function(c){return c.count===1;})}
+  ];
+  $('anAudiences').innerHTML=segs.map(function(s){return '<div class="aud-card"><b>'+s.ic+' '+s.label+'</b><small>'+s.desc+'</small><span class="n">'+s.list.length+' زبون</span><div style="margin-top:9px"><button class="btn btn-sm btn-teal" onclick="exportAudience(\''+s.id+'\')" '+(s.list.length?'':'disabled style="opacity:.4"')+'>⬇ تصدير CSV</button></div></div>';}).join('');
+  window.__AUD={};segs.forEach(function(s){window.__AUD[s.id]=s.list;});
+}
+function waRisk(phone){var cm=custMap();var c=cm[phone];if(!c)return;waTo(c.phoneRaw,'مرحباً '+(c.name||'')+' 👋\nمن LCARE IQ — اشتقنالك! حساسك انتهى من فترة، وحابين نذكّرك أن التجديد صار أسهل من متجرنا مباشرة 💚\n'+cfg().website);}
+function exportAudience(id){
+  var list=(window.__AUD||{})[id]||[];if(!list.length){toast('لا بيانات','err');return;}
+  var lines=[['email','phone','fn','ln','ct','country'].join(',')];
+  list.forEach(function(c){var parts=(c.name||'').split(/\s+/);lines.push([csvField(c.email||''),csvField(c.phone||''),csvField(parts[0]||''),csvField(parts.slice(1).join(' ')||''),csvField(c.gov||''),'iq'].join(','));});
+  var blob=new Blob(['\ufeff'+lines.join('\n')],{type:'text/csv;charset=utf-8'});
+  var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='meta_audience_'+id+'.csv';a.click();
+  toast('صُدّر '+list.length+' زبوناً ✓','ok');
 }
 async function saveCostInline(id,val){
   var c=parseInt(val,10);
@@ -1037,6 +1207,89 @@ async function saveCostInline(id,val){
     toast('حُفظ سعر الجملة ✓','ok');
     renderProfits();
   }catch(e){ toast('تعذّر الحفظ — تحقّق من تشغيل profits-setup.sql','err'); }
+}
+
+/* ══════════ التذكيرات ══════════ */
+const NON_RENEWAL_REASONS=['السعر غالي','اشترى من مكان آخر','اعترض على مدة الحساس','لا يحتاج حالياً','لم يرد نهائياً','مشكلة في التوصيل','أخرى'];
+function reminderLists(){
+  var latestByPhone={};
+  ORDERS.forEach(function(o){if(o.status!=='bought'||!o.phone)return;var t=oTs(o);if(!latestByPhone[o.phone]||t>latestByPhone[o.phone])latestByPhone[o.phone]=t;});
+  var due=[],over=[],waiting=0;
+  ORDERS.forEach(function(o){
+    if(o.status!=='bought')return;
+    if(o.reminder_outcome==='not_renewed')return;
+    var sn=orderSensor(o);if(!sn)return;
+    if(o.phone&&latestByPhone[o.phone]>oTs(o))return; /* جدّد بطلب أحدث */
+    var remDate=sn.expiry-2*86400000;
+    if(Date.now()<remDate)return;                       /* لم يحن وقته */
+    var overdueDays=Math.floor((Date.now()-sn.expiry)/86400000);
+    if(overdueDays>30)return;                            /* أقدم من ٣٠ يوم */
+    var row={o:o,sn:sn,dl:dLeft(sn.expiry)};
+    if(o.reminder_outcome==='pending_reply')waiting++;
+    if(sn.expiry>=Date.now())due.push(row);else over.push(row);
+  });
+  due.sort(function(a,b){return a.sn.expiry-b.sn.expiry;});
+  over.sort(function(a,b){return b.sn.expiry-a.sn.expiry;});
+  return {due:due,over:over,waiting:waiting};
+}
+function remRow(r){
+  var o=r.o,sn=r.sn,dl=r.dl;
+  var when=dl>1?('ينتهي بعد '+dl+' أيام'):(dl===1?'ينتهي غداً':(dl===0?'ينتهي اليوم':('⛔ متأخر '+Math.abs(dl)+' يوم')));
+  var wait=o.reminder_outcome==='pending_reply';
+  return '<div class="orow"><div class="orow-top">'
+    +'<div class="who"><b>'+esc(o.name||'—')+'</b><small>'+esc(sn.name)+' · '+when+' ('+fmtD(sn.expiry)+')'+(wait?' · <span style="color:var(--amber);font-weight:700">⏳ بانتظار الرد</span>':'')+'</small></div>'
+    +'<a href="tel:'+esc(o.phone_raw||o.phone||'')+'" style="color:var(--teal);font-weight:800;text-decoration:none;font-size:14px">📞 '+esc(o.phone_raw||o.phone||'')+'</a></div>'
+    +'<div class="orow-actions" style="border-top:none;padding-top:6px">'
+    +'<button class="btn btn-sm btn-teal" onclick="quickRenew(\''+esc(o.id)+'\')">✅ تم التجديد</button>'
+    +'<button class="btn btn-sm" onclick="waReminder(\''+esc(o.id)+'\')">💬 تذكير واتساب</button>'
+    +(wait?'':'<button class="btn btn-sm" onclick="markWaiting(\''+esc(o.id)+'\')">⏳ بانتظار الرد</button>')
+    +'<button class="btn btn-sm btn-red" onclick="showReasons(\''+esc(o.id)+'\',this)">❌ لم يجدد</button>'
+    +'</div><div class="rem-reasons" style="display:none"></div></div>';
+}
+function renderReminders(){
+  var L=reminderLists();
+  $('rmDue').textContent=L.due.length;$('rmOver').textContent=L.over.length;$('rmWait').textContent=L.waiting;$('overN').textContent=L.over.length;
+  var rc=L.due.length+L.over.length;
+  var b=$('remCnt');b.textContent=rc;b.style.display=rc?'inline-grid':'none';
+  $('remDueList').innerHTML=L.due.length?L.due.map(remRow).join(''):'<div class="empty">لا تذكيرات اليوم 🎉</div>';
+  $('remOverList').innerHTML=L.over.length?L.over.map(remRow).join(''):'<div class="empty">لا متأخرين 🎉</div>';
+}
+function toggleOverdue(){var el=$('remOverList');el.style.display=el.style.display==='none'?'block':'none';}
+function waReminder(id){var o=ORDERS.find(function(x){return x.id===id;});if(!o)return;var sn=orderSensor(o);if(!sn)return;waTo(o.phone_raw||o.phone,genReminderMsg(o,sn));}
+async function markWaiting(id){
+  const {error}=await sb.from('orders').update({reminder_outcome:'pending_reply'}).eq('id',id);
+  if(error){toast('خطأ: '+error.message+' — هل شغّلت reminders-setup.sql؟','err');return;}
+  var o=ORDERS.find(function(x){return x.id===id;});if(o)o.reminder_outcome='pending_reply';
+  toast('عُلّم بانتظار الرد','ok');renderReminders();
+}
+function showReasons(id,btn){
+  var box=btn.closest('.orow').querySelector('.rem-reasons');
+  if(box.style.display==='block'){box.style.display='none';return;}
+  box.innerHTML='<div style="display:flex;gap:7px;flex-wrap:wrap;padding:10px 0 4px">'+NON_RENEWAL_REASONS.map(function(r){return '<button class="fpill" onclick="markNotRenewed(\''+esc(id)+'\',\''+esc(r)+'\')">'+esc(r)+'</button>';}).join('')+'</div>';
+  box.style.display='block';
+}
+async function markNotRenewed(id,reason){
+  const {error}=await sb.from('orders').update({reminder_outcome:'not_renewed',reminder_reason:reason}).eq('id',id);
+  if(error){toast('خطأ: '+error.message+' — هل شغّلت reminders-setup.sql؟','err');return;}
+  var o=ORDERS.find(function(x){return x.id===id;});if(o){o.reminder_outcome='not_renewed';o.reminder_reason=reason;}
+  toast('سُجّل السبب: '+reason,'ok');renderReminders();
+}
+async function quickRenew(id){
+  var old=ORDERS.find(function(x){return x.id===id;});if(!old)return;
+  if(!confirm('إنشاء طلب تجديد لـ'+(old.name||'')+' بنفس الحساس وبسعر اليوم؟'))return;
+  var sensors=(old.items||[]).filter(function(it){return SENSOR_DUR[it.id];});
+  if(!sensors.length){toast('لا حساس في الطلب الأصلي','err');return;}
+  var items=sensors.map(function(it){var p=ALL.find(function(x){return x.id===it.id;})||{price:it.unit||0,bulkTiers:[]};return {id:it.id,name:it.name,qty:it.qty,unit:moUnit(p,it.qty)};});
+  var sub=items.reduce(function(s,it){return s+it.unit*it.qty;},0);
+  var ship=sub>=200000?0:5000;
+  var ts=Date.now(),nid='ord_'+ts;
+  var row={id:nid,ts:ts,created_at:new Date(ts).toISOString(),name:old.name,phone:old.phone,phone_raw:old.phone_raw,email:old.email||null,gov:old.gov||null,addr:old.addr||null,notes:'تجديد تلقائي من '+id,products:items.map(function(i){return i.name+' ×'+i.qty;}).join(' | '),items:items,subtotal:sub,shipping:ship,total:sub+ship,pay:old.pay||'الدفع عند الاستلام',pay_id:old.pay_id||'cod',status:'bought',purchase_fired:true,fbp:old.fbp||null,fbc:old.fbc||null,xid:old.xid||null,source:'renewal',renewed_from:id};
+  const {error}=await sb.from('orders').insert(row);
+  if(error){toast('خطأ: '+error.message,'err');return;}
+  ORDERS.unshift(row);
+  firePurchase(row);
+  toast('✅ أُنشئ طلب التجديد ('+fmt(row.total)+' د.ع) وأُرسل حدث الشراء لفيسبوك','ok');
+  renderReminders();renderOrders();
 }
 
 /* ══════════ أدوات ══════════ */
