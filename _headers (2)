@@ -1,0 +1,7 @@
+# يمنع المتصفح من عرض نسخة قديمة مخزّنة من صفحات الموقع
+/
+  Cache-Control: public, max-age=0, must-revalidate
+/index.html
+  Cache-Control: public, max-age=0, must-revalidate
+/admin.html
+  Cache-Control: public, max-age=0, must-revalidate
