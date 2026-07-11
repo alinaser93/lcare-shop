@@ -171,6 +171,15 @@ input,select,textarea,button{font-family:inherit}
 .orow-body{margin:9px 0 10px;font-size:13px;color:var(--ink-s);line-height:1.75}
 .orow-body .lbl{color:var(--ink-m);font-size:11.5px}
 .orow-money{font-weight:800;color:var(--teal-d)}
+.orow-money-row{margin:9px 0}
+.oitems{display:flex;flex-wrap:wrap;gap:7px;margin:9px 0}
+.oitem{display:flex;align-items:center;gap:8px;background:var(--paper);border:1px solid var(--line);border-radius:11px;padding:5px 11px 5px 6px}
+.oitem-img{width:38px;height:38px;border-radius:8px;overflow:hidden;background:var(--cream);display:grid;place-items:center;flex:0 0 auto}
+.oitem-img img{width:100%;height:100%;object-fit:cover}
+.oitem-ph{font-size:17px;opacity:.4}
+.oitem-info b{font-size:12.5px;font-weight:700;color:var(--ink);display:block;line-height:1.25}
+.oitem-info small{font-size:11px;color:var(--ink-m)}
+.oitems-text{margin:9px 0;font-size:13px;color:var(--ink-s)}
 .orow-actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center;border-top:1px dashed var(--line);padding-top:10px}
 .orow-actions select{padding:8px 10px;border:1px solid var(--line);border-radius:9px;font-size:12.5px;background:var(--paper);font-weight:600}
 .chk-lg{width:18px;height:18px;accent-color:var(--teal);cursor:pointer;flex:0 0 auto}
@@ -252,6 +261,7 @@ input,select,textarea,button{font-family:inherit}
     <div class="toolbar">
       <div class="search"><input id="oq" placeholder="🔍 ابحث بالاسم أو الهاتف…" oninput="renderOrders()"></div>
       <button class="btn btn-sm" onclick="loadOrders()">🔄 تحديث</button>
+      <button class="btn btn-sm btn-teal" onclick="openManualOrder()">➕ طلب يدوي</button>
       <button class="btn btn-sm" onclick="exportOrdersCSV('all')">⬇ CSV الكل</button>
       <button class="btn btn-sm" onclick="exportOrdersCSV('bought')">⬇ CSV المشترين</button>
       <button class="btn btn-sm" onclick="document.getElementById('csvFile').click()">⬆ استيراد CSV نتلفاي</button>
@@ -290,6 +300,51 @@ input,select,textarea,button{font-family:inherit}
     <div class="editor-foot">
       <button class="btn" onclick="closeEditor()">إلغاء</button>
       <button class="btn btn-teal" id="saveBtn" onclick="saveProduct()">حفظ المنتج</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="ovManual" onclick="closeManualOrder()"></div>
+<div class="editor" id="manualEditor">
+  <div class="editor-card">
+    <div class="editor-hd">
+      <h2>➕ طلب يدوي (واتساب)</h2>
+      <button class="x" onclick="closeManualOrder()">✕</button>
+    </div>
+    <div class="editor-body">
+      <div class="grid2">
+        <div class="field"><label>اسم الزبون *</label><input id="mo_name" placeholder="الاسم الكامل"></div>
+        <div class="field"><label>الهاتف *</label><input id="mo_phone" placeholder="07XXXXXXXXX" inputmode="tel"></div>
+      </div>
+      <div class="grid2">
+        <div class="field"><label>المحافظة</label><input id="mo_gov" placeholder="بغداد"></div>
+        <div class="field"><label>العنوان</label><input id="mo_addr" placeholder="المنطقة / أقرب نقطة دالة"></div>
+      </div>
+      <div class="field">
+        <label>المنتجات</label>
+        <div style="display:flex;gap:8px;align-items:center">
+          <select id="mo_prod" style="flex:1"></select>
+          <input id="mo_qty" type="number" value="1" min="1" style="width:64px;text-align:center" inputmode="numeric">
+          <button type="button" class="btn btn-sm btn-teal" onclick="moAddItem()">＋ أضف</button>
+        </div>
+        <div id="mo_items"></div>
+      </div>
+      <div class="grid2">
+        <div class="field"><label>الشحن (د.ع)</label><input id="mo_ship" type="number" value="5000" inputmode="numeric" oninput="moRenderItems()"></div>
+        <div class="field"><label>الحالة</label>
+          <select id="mo_status">
+            <option value="bought">مشترٍ ✓ (يُرسل حدث الشراء لفيسبوك)</option>
+            <option value="pending">معلّق</option>
+            <option value="nobuy">لم يشترِ</option>
+          </select>
+        </div>
+      </div>
+      <div class="field"><label>ملاحظات</label><input id="mo_notes" placeholder="اختياري"></div>
+      <div style="text-align:left;font-weight:800;font-size:17px;margin-top:6px;color:var(--ink)">المجموع: <span id="mo_total" style="color:var(--teal-d)">0</span> د.ع</div>
+    </div>
+    <div class="editor-foot">
+      <button class="btn" onclick="closeManualOrder()">إلغاء</button>
+      <button class="btn btn-teal" id="moSaveBtn" onclick="saveManualOrder()">حفظ الطلب</button>
     </div>
   </div>
 </div>
@@ -658,17 +713,29 @@ function renderOrders(){
   var list=oFiltered();
   if(!list.length){$('olist').innerHTML='<div class="empty">لا توجد طلبات مطابقة</div>';updateBulk();return;}
   $('olist').innerHTML=list.map(function(o){
-    var itemsTxt=o.products||((o.items||[]).map(function(i){return i.name+' ×'+i.qty;}).join(' | '));
+    var itemsHTML;
+    if(o.items&&o.items.length){
+      itemsHTML='<div class="oitems">'+o.items.map(function(it){
+        var p=ALL.find(function(x){return x.id===it.id;});
+        var img=(p&&p.images&&p.images[0])||'';
+        var ic=img?('<img src="'+esc(img)+'" loading="lazy" onerror="this.style.display=\'none\';this.parentElement.innerHTML=\'<span class=oitem-ph>📦</span>\'">'):'<span class="oitem-ph">📦</span>';
+        return '<div class="oitem"><div class="oitem-img">'+ic+'</div><div class="oitem-info"><b>'+esc(it.name)+'</b><small>×'+it.qty+(it.unit?(' · '+fmt(it.unit)+' د.ع'):'')+'</small></div></div>';
+      }).join('')+'</div>';
+    } else {
+      itemsHTML='<div class="oitems-text">🛒 '+esc(o.products||'—')+'</div>';
+    }
+    var mapUrl='https://www.google.com/maps/search/?api=1&query='+encodeURIComponent((o.gov||'')+' '+(o.addr||''));
     return '<div class="orow"><div class="orow-top">'
       +'<div style="display:flex;gap:10px;align-items:flex-start"><input type="checkbox" class="chk-lg row-chk" data-id="'+esc(o.id)+'" onchange="updateBulk()">'
       +'<div class="who"><b>'+esc(o.name||'—')+'</b><small>'+timeAgo(oTs(o))+' · '+esc(o.gov||'')+'</small></div></div>'
       +'<span class="stbadge st-'+esc(o.status)+'">'+(O_ST[o.status]||esc(o.status))+'</span></div>'
       +'<div class="orow-body">'
       +'<span class="lbl">📞</span> <a href="tel:'+esc(o.phone_raw||o.phone||'')+'" style="color:var(--teal);font-weight:700;text-decoration:none">'+esc(o.phone_raw||o.phone||'—')+'</a><br>'
-      +'<span class="lbl">🏠</span> '+esc(o.addr||'—')+(o.notes?('<br><span class="lbl">📝</span> '+esc(o.notes)):'')+'<br>'
-      +'<span class="lbl">🛒</span> '+esc(itemsTxt)+'<br>'
-      +'<span class="orow-money">💰 '+fmt(o.total||0)+' د.ع</span> <span class="lbl">· '+esc(o.pay||'')+(o.shipping===0?' · شحن مجاني':'')+'</span>'
-      +'</div><div class="orow-actions">'
+      +'<span class="lbl">🏠</span> '+esc(o.addr||'—')+' <a href="'+mapUrl+'" target="_blank" style="color:var(--teal);font-size:11px;text-decoration:none">🗺 خريطة</a>'+(o.notes?('<br><span class="lbl">📝</span> '+esc(o.notes)):'')+'</div>'
+      +itemsHTML
+      +'<div class="orow-money-row"><span class="orow-money">💰 '+fmt(o.total||0)+' د.ع</span> <span class="lbl">· '+esc(o.pay||'')+(o.shipping===0?' · شحن مجاني':(o.shipping?(' · شحن '+fmt(o.shipping)+' د.ع'):''))+(o.source&&o.source!=='web'?(' · <span style="color:var(--gold-d)">'+(o.source==='whatsapp'?'واتساب':o.source==='local-migrate'?'مُرحّل':o.source==='netlify-import'?'نتلفاي':'يدوي')+'</span>'):'')+'</span></div>'
+      +'<div class="orow-actions">'
+      +'<button class="btn btn-sm" onclick="copyShip(\''+esc(o.id)+'\')">📋 نسخ للشحن</button>'
       +'<select onchange="markOrder(\''+esc(o.id)+'\',this.value)">'
       +Object.keys(O_ST).map(function(k){return '<option value="'+k+'"'+(o.status===k?' selected':'')+'>'+O_ST[k]+'</option>';}).join('')
       +'</select>'
@@ -793,6 +860,67 @@ async function migrateLocal(){
   const {error}=await sb.from('orders').upsert(batch,{onConflict:'id'});
   if(error){toast('خطأ الترحيل: '+error.message,'err');return;}
   toast('رُحّل '+batch.length+' طلباً من المتصفح ✓','ok');loadOrders();
+}
+
+/* ── نسخ بيانات الشحن ── */
+function copyShip(id){
+  var o=ORDERS.find(function(x){return x.id===id;});if(!o)return;
+  var txt=(o.name||'')+'\n'+(o.phone_raw||o.phone||'')+'\n'+(o.gov||'')+' - '+(o.addr||'')+'\n'+fmt(o.total||0)+' د.ع'+(o.notes?('\nملاحظة: '+o.notes):'');
+  if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(txt).then(function(){toast('نُسخت بيانات الشحن ✓','ok');},function(){moFallbackCopy(txt);});}
+  else moFallbackCopy(txt);
+}
+function moFallbackCopy(txt){try{var ta=document.createElement('textarea');ta.value=txt;ta.style.position='fixed';ta.style.opacity='0';document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);toast('نُسخت بيانات الشحن ✓','ok');}catch(e){toast('تعذّر النسخ');}}
+
+/* ── طلب يدوي (زبائن واتساب) ── */
+var moItems=[];
+function openManualOrder(){
+  moItems=[];
+  $('mo_prod').innerHTML=ALL.filter(function(p){return !p.hideGrid;}).map(function(p){return '<option value="'+esc(p.id)+'">'+esc(p.name)+' — '+fmt(p.price)+'</option>';}).join('');
+  ['mo_name','mo_phone','mo_gov','mo_addr','mo_notes'].forEach(function(f){$(f).value='';});
+  $('mo_qty').value=1;$('mo_ship').value=5000;$('mo_status').value='bought';
+  moRenderItems();
+  $('ovManual').classList.add('on');$('manualEditor').classList.add('on');document.body.style.overflow='hidden';
+}
+function closeManualOrder(){$('ovManual').classList.remove('on');$('manualEditor').classList.remove('on');document.body.style.overflow='';}
+function moUnit(p,qty){var pr=p.price||0;if(p.bulkTiers&&p.bulkTiers.length){var ap=p.bulkTiers.filter(function(t){return qty>=t.q;}).sort(function(a,b){return b.q-a.q;})[0];if(ap)pr=ap.u;}return pr;}
+function moAddItem(){
+  var id=$('mo_prod').value,qty=parseInt($('mo_qty').value,10)||1;
+  var p=ALL.find(function(x){return x.id===id;});if(!p)return;
+  var ex=moItems.find(function(i){return i.id===id;});
+  if(ex)ex.qty+=qty;else moItems.push({id:p.id,name:p.name,qty:qty});
+  moRenderItems();
+}
+function moRemoveItem(i){moItems.splice(i,1);moRenderItems();}
+function moRenderItems(){
+  var sub=0;
+  $('mo_items').innerHTML=moItems.map(function(it,i){
+    var p=ALL.find(function(x){return x.id===it.id;})||{price:0};
+    var line=moUnit(p,it.qty)*it.qty;sub+=line;
+    return '<div style="display:flex;align-items:center;gap:8px;background:var(--paper);border:1px solid var(--line);border-radius:9px;padding:7px 10px;margin-top:6px"><span style="flex:1;font-size:13px;font-weight:600">'+esc(it.name)+' × '+it.qty+'</span><span style="font-weight:700;color:var(--teal-d);font-size:13px">'+fmt(line)+'</span><button type="button" class="dyn-rm" onclick="moRemoveItem('+i+')">✕</button></div>';
+  }).join('')||'<div style="color:var(--ink-m);font-size:12.5px;padding:6px 0">لم تُضف منتجات بعد</div>';
+  var ship=parseInt($('mo_ship').value,10)||0;
+  $('mo_total').textContent=fmt(sub+ship);
+  $('mo_items').dataset.sub=sub;
+}
+async function saveManualOrder(){
+  var name=$('mo_name').value.trim(),phone=$('mo_phone').value.trim();
+  if(!name){toast('اسم الزبون مطلوب','err');return;}
+  if(!phone){toast('الهاتف مطلوب','err');return;}
+  if(!moItems.length){toast('أضف منتجاً واحداً على الأقل','err');return;}
+  var sub=parseInt($('mo_items').dataset.sub,10)||0;
+  var ship=parseInt($('mo_ship').value,10)||0;
+  var status=$('mo_status').value;
+  var ts=Date.now(),id='ord_'+ts;
+  var items=moItems.map(function(it){var p=ALL.find(function(x){return x.id===it.id;})||{price:0};return {id:it.id,name:it.name,qty:it.qty,unit:moUnit(p,it.qty)};});
+  var row={id:id,ts:ts,created_at:new Date(ts).toISOString(),name:name,phone:normPhone(phone),phone_raw:phone,email:null,gov:$('mo_gov').value.trim()||null,addr:$('mo_addr').value.trim()||null,notes:$('mo_notes').value.trim()||null,products:moItems.map(function(i){return i.name+' ×'+i.qty;}).join(' | '),items:items,subtotal:sub,shipping:ship,total:sub+ship,pay:'واتساب',pay_id:'whatsapp',status:status,purchase_fired:status==='bought',source:'whatsapp'};
+  var btn=$('moSaveBtn');btn.disabled=true;btn.innerHTML='<span class="spin"></span>حفظ…';
+  const {error}=await sb.from('orders').insert(row);
+  btn.disabled=false;btn.textContent='حفظ الطلب';
+  if(error){toast('خطأ: '+error.message,'err');return;}
+  ORDERS.unshift(row);
+  if(status==='bought')firePurchase(row);
+  toast('أُضيف الطلب'+(status==='bought'?' وأُرسل حدث الشراء ✓':' ✓'),'ok');
+  closeManualOrder();renderOrders();
 }
 
 /* ══════════ أدوات ══════════ */
