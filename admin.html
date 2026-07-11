@@ -180,6 +180,20 @@ input,select,textarea,button{font-family:inherit}
 .oitem-info b{font-size:12.5px;font-weight:700;color:var(--ink);display:block;line-height:1.25}
 .oitem-info small{font-size:11px;color:var(--ink-m)}
 .oitems-text{margin:9px 0;font-size:13px;color:var(--ink-s)}
+.prof-setting{display:flex;align-items:center;gap:9px;flex-wrap:wrap;background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px 15px;margin-bottom:14px;font-size:13px;font-weight:600;color:var(--ink-s)}
+.prof-setting input{width:100px;padding:8px 10px;border:1px solid var(--line);border-radius:9px;font-size:14px;font-weight:700;background:var(--paper);text-align:center}
+.prof-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:11px;margin:14px 0 8px}
+.prof-card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:16px 14px;text-align:center}
+.prof-ic{font-size:22px;margin-bottom:5px}
+.prof-val{font-size:20px;font-weight:800;font-family:'IBM Plex Sans Arabic';line-height:1.2}
+.prof-label{font-size:11.5px;color:var(--ink-m);font-weight:600;margin-top:3px}
+.prof-h{font-size:15px;font-weight:800;color:var(--ink);margin:22px 0 10px}
+.prof-table-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:13px;background:#fff}
+.prof-table{width:100%;border-collapse:collapse;font-size:13px;min-width:380px}
+.prof-table th{background:var(--cream);color:var(--ink-s);font-weight:700;padding:11px 13px;text-align:right;font-size:12px;white-space:nowrap}
+.prof-table td{padding:11px 13px;border-top:1px solid var(--line);color:var(--ink);white-space:nowrap}
+.prof-table tr:hover td{background:var(--paper)}
+.prof-note{font-size:12px;color:var(--ink-m);line-height:1.7;margin-top:14px;background:var(--cream);padding:12px 15px;border-radius:11px}
 .orow-actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center;border-top:1px dashed var(--line);padding-top:10px}
 .orow-actions select{padding:8px 10px;border:1px solid var(--line);border-radius:9px;font-size:12.5px;background:var(--paper);font-weight:600}
 .chk-lg{width:18px;height:18px;accent-color:var(--teal);cursor:pointer;flex:0 0 auto}
@@ -241,6 +255,7 @@ input,select,textarea,button{font-family:inherit}
   <div class="tabs">
     <button class="tab on" id="tabProducts" onclick="switchTab('products')">🛍 المنتجات</button>
     <button class="tab" id="tabOrders" onclick="switchTab('orders')">📦 الطلبات <span class="cnt" id="newCnt" style="display:none">0</span></button>
+    <button class="tab" id="tabProfits" onclick="switchTab('profits')">📊 الأرباح</button>
   </div>
 
   <div id="viewProducts">
@@ -285,6 +300,25 @@ input,select,textarea,button{font-family:inherit}
         <button onclick="bulkDelete()">🗑 حذف</button>
       </div>
     </div>
+  </div>
+
+  <div id="viewProfits" style="display:none">
+    <div class="prof-setting">
+      <span>💵 تكلفة التوصيل الفعلية (تدفعها لشركة التوصيل):</span>
+      <input id="shipCostInput" type="number" value="5000" oninput="saveShipCost(this.value)">
+      <span>د.ع / طلب</span>
+    </div>
+    <div class="fpills" style="margin-top:6px">
+      <button class="fpill" data-p="today" onclick="setPeriod('today')">اليوم</button>
+      <button class="fpill" data-p="month" onclick="setPeriod('month')">هذا الشهر</button>
+      <button class="fpill on" data-p="all" onclick="setPeriod('all')">الكل</button>
+    </div>
+    <div class="prof-cards" id="profCards"></div>
+    <h3 class="prof-h">🏆 أكثر المنتجات ربحاً ومبيعاً</h3>
+    <div class="prof-table-wrap"><table class="prof-table" id="profTopTable"></table></div>
+    <h3 class="prof-h">📈 هامش الربح لكل منتج</h3>
+    <div class="prof-table-wrap"><table class="prof-table" id="profMarginTable"></table></div>
+    <p class="prof-note">💡 الربح الصافي = الإيراد − سعر الجملة − تكلفة التوصيل. يُحسب من الطلبات المعلّمة «مشترٍ» فقط. أدخل «سعر الجملة» لكل منتج من زر ✏️ في تبويب المنتجات لتدقيق الأرباح. أسعار الجملة سرّية ولا تظهر للزبائن إطلاقاً.</p>
   </div>
 </div>
 
@@ -401,7 +435,7 @@ async function doLogin(){
   showApp();
 }
 async function doLogout(){ await sb.auth.signOut(); $('gate').style.display='flex'; $('app').style.display='none'; }
-async function showApp(){ $('gate').style.display='none'; $('app').style.display='block'; await reload(); loadOrders(); }
+async function showApp(){ $('gate').style.display='none'; $('app').style.display='block'; await reload(); await loadCosts(); loadOrders(); }
 
 /* ══════════ تحميل المنتجات ══════════ */
 async function reload(){
@@ -477,6 +511,7 @@ function editorHTML(p,isEdit){
       <div class="field"><label>السعر (د.ع)</label><input id="f_price" type="number" value="${p.price??''}" placeholder="95000"></div>
       <div class="field"><label>الترتيب <span class="hint">الأصغر أولاً</span></label><input id="f_sortOrder" type="number" value="${p.sortOrder??100}"></div>
     </div>
+    <div class="field"><label>💰 سعر الجملة — تكلفتك 🔒 <span class="hint">سرّي، لا يظهر للزبون — لحساب الربح</span></label><input id="f_cost" type="number" value="${COSTS[p.id]??''}" placeholder="مثال: 55000"></div>
     <label class="chk"><input type="checkbox" id="f_visible" ${p.visible?'checked':''}><span>ظاهر في المتجر</span></label>
     <label class="chk"><input type="checkbox" id="f_hideGrid" ${p.hideGrid?'checked':''}><span>إخفاء من الشبكة الرئيسية <span class="hint" style="font-weight:400">(يبقى قابلاً للفتح برابط مباشر)</span></span></label>
   `)}
@@ -654,6 +689,11 @@ async function saveProduct(){
   else res=await sb.from('products').update(row).eq('id',editing.id);
   btn.disabled=false; btn.textContent='حفظ المنتج';
   if(res.error){ toast('خطأ في الحفظ: '+res.error.message,'err'); return; }
+  // حفظ سعر الجملة في الجدول المحمي (منفصل عن المنتج العام)
+  try{
+    var costVal=num(g('f_cost'));
+    if(costVal!=null&&!isNaN(costVal)){ await sb.from('product_costs').upsert({id:f.id,cost:costVal,updated_at:new Date().toISOString()},{onConflict:'id'}); COSTS[f.id]=costVal; }
+  }catch(e){}
   toast(isNew?'أُضيف المنتج ✓':'حُفظت التعديلات ✓','ok');
   closeEditor();
   await reload();
@@ -672,15 +712,25 @@ async function delProduct(id){
 /* ══════════ الطلبات ══════════ */
 window.LC_CAPI='/.netlify/functions/capi';
 let ORDERS=[], oFilter='all', curTab='products';
+var COSTS={};            /* {id: سعر الجملة} — سرّي */
+function shipCost(){return parseInt(localStorage.getItem('lc_ship_cost')||'5000',10)||0;}
+async function loadCosts(){
+  try{const {data,error}=await sb.from('product_costs').select('*');if(!error&&data){COSTS={};data.forEach(function(r){COSTS[r.id]=r.cost;});}}catch(e){}
+}
+function orderCOGS(o){return (o.items||[]).reduce(function(s,it){return s+((COSTS[it.id]||0)*it.qty);},0);}
+function orderProfit(o){return (o.total||0)-orderCOGS(o)-shipCost();}
 const O_ST={pending:'معلّق',pending_payment:'بانتظار الدفع',bought:'مشترٍ ✓',nobuy:'لم يشترِ'};
 
 function switchTab(t){
   curTab=t;
   $('tabProducts').classList.toggle('on',t==='products');
   $('tabOrders').classList.toggle('on',t==='orders');
+  $('tabProfits').classList.toggle('on',t==='profits');
   $('viewProducts').style.display=t==='products'?'block':'none';
   $('viewOrders').style.display=t==='orders'?'block':'none';
+  $('viewProfits').style.display=t==='profits'?'block':'none';
   if(t==='orders'&&!ORDERS.length)loadOrders();
+  if(t==='profits')renderProfits();
 }
 async function loadOrders(){
   $('olist').innerHTML='<div class="loading"><span class="spin" style="border-color:rgba(0,0,0,.15);border-top-color:var(--teal)"></span> جارٍ التحميل…</div>';
@@ -733,7 +783,7 @@ function renderOrders(){
       +'<span class="lbl">📞</span> <a href="tel:'+esc(o.phone_raw||o.phone||'')+'" style="color:var(--teal);font-weight:700;text-decoration:none">'+esc(o.phone_raw||o.phone||'—')+'</a><br>'
       +'<span class="lbl">🏠</span> '+esc(o.addr||'—')+' <a href="'+mapUrl+'" target="_blank" style="color:var(--teal);font-size:11px;text-decoration:none">🗺 خريطة</a>'+(o.notes?('<br><span class="lbl">📝</span> '+esc(o.notes)):'')+'</div>'
       +itemsHTML
-      +'<div class="orow-money-row"><span class="orow-money">💰 '+fmt(o.total||0)+' د.ع</span> <span class="lbl">· '+esc(o.pay||'')+(o.shipping===0?' · شحن مجاني':(o.shipping?(' · شحن '+fmt(o.shipping)+' د.ع'):''))+(o.source&&o.source!=='web'?(' · <span style="color:var(--gold-d)">'+(o.source==='whatsapp'?'واتساب':o.source==='local-migrate'?'مُرحّل':o.source==='netlify-import'?'نتلفاي':'يدوي')+'</span>'):'')+'</span></div>'
+      +'<div class="orow-money-row"><span class="orow-money">💰 '+fmt(o.total||0)+' د.ع</span>'+(o.status==='bought'?(' <span style="color:var(--green);font-weight:800;font-size:12.5px">· ربح '+fmt(orderProfit(o))+' د.ع</span>'):'')+' <span class="lbl">· '+esc(o.pay||'')+(o.shipping===0?' · شحن مجاني':(o.shipping?(' · شحن '+fmt(o.shipping)+' د.ع'):''))+(o.source&&o.source!=='web'?(' · <span style="color:var(--gold-d)">'+(o.source==='whatsapp'?'واتساب':o.source==='local-migrate'?'مُرحّل':o.source==='netlify-import'?'نتلفاي':'يدوي')+'</span>'):'')+'</span></div>'
       +'<div class="orow-actions">'
       +'<button class="btn btn-sm" onclick="copyShip(\''+esc(o.id)+'\')">📋 نسخ للشحن</button>'
       +'<select onchange="markOrder(\''+esc(o.id)+'\',this.value)">'
@@ -921,6 +971,53 @@ async function saveManualOrder(){
   if(status==='bought')firePurchase(row);
   toast('أُضيف الطلب'+(status==='bought'?' وأُرسل حدث الشراء ✓':' ✓'),'ok');
   closeManualOrder();renderOrders();
+}
+
+/* ══════════ الأرباح ══════════ */
+let profPeriod='all';
+function saveShipCost(v){localStorage.setItem('lc_ship_cost',String(parseInt(v,10)||0));renderProfits();}
+function setPeriod(p){profPeriod=p;document.querySelectorAll('#viewProfits .fpill').forEach(function(b){b.classList.toggle('on',b.getAttribute('data-p')===p);});renderProfits();}
+function profOrders(){
+  var b=ORDERS.filter(function(o){return o.status==='bought';});
+  if(profPeriod==='all')return b;
+  var d=new Date();
+  if(profPeriod==='today'){d.setHours(0,0,0,0);return b.filter(function(o){return oTs(o)>=d.getTime();});}
+  var m=new Date(d.getFullYear(),d.getMonth(),1).getTime();
+  return b.filter(function(o){return oTs(o)>=m;});
+}
+function profCard(ic,label,val,color){return '<div class="prof-card"><div class="prof-ic">'+ic+'</div><div class="prof-val" style="color:'+color+'">'+val+'</div><div class="prof-label">'+label+'</div></div>';}
+function renderProfits(){
+  var si=$('shipCostInput');if(si&&document.activeElement!==si)si.value=shipCost();
+  var list=profOrders();
+  var revenue=0,cogs=0,ship=0;
+  list.forEach(function(o){revenue+=(o.total||0);cogs+=orderCOGS(o);ship+=shipCost();});
+  var net=revenue-cogs-ship, margin=revenue?Math.round(net/revenue*100):0;
+  $('profCards').innerHTML=
+    profCard('💰','الإيراد',fmt(revenue),'var(--teal-d)')
+    +profCard('📦','تكلفة البضاعة',fmt(cogs),'var(--ink-s)')
+    +profCard('🚚','تكلفة التوصيل',fmt(ship),'var(--ink-s)')
+    +profCard('✅','الربح الصافي',fmt(net),net>=0?'#1f9d57':'var(--red)')
+    +profCard('📊','هامش الربح',margin+'%',margin>=0?'#1f9d57':'var(--red)')
+    +profCard('🧾','عدد الطلبات',fmt(list.length),'var(--ink)');
+  // أكثر المنتجات ربحاً ومبيعاً
+  var agg={};
+  list.forEach(function(o){(o.items||[]).forEach(function(it){
+    if(!agg[it.id])agg[it.id]={name:it.name,qty:0,rev:0,prof:0};
+    var c=COSTS[it.id]||0;
+    agg[it.id].qty+=it.qty; agg[it.id].rev+=(it.unit||0)*it.qty; agg[it.id].prof+=((it.unit||0)-c)*it.qty;
+  });});
+  var top=Object.keys(agg).map(function(k){return agg[k];}).sort(function(a,b){return b.prof-a.prof;});
+  $('profTopTable').innerHTML='<tr><th>المنتج</th><th>مُباع</th><th>الإيراد</th><th>الربح</th></tr>'+
+    (top.length?top.map(function(r){return '<tr><td>'+esc(r.name)+'</td><td>'+r.qty+'</td><td>'+fmt(r.rev)+'</td><td style="color:#1f9d57;font-weight:700">'+fmt(r.prof)+'</td></tr>';}).join(''):'<tr><td colspan="4" style="text-align:center;color:var(--ink-m);padding:14px">لا مبيعات في هذه الفترة</td></tr>');
+  // هامش الربح لكل منتج
+  var prods=ALL.filter(function(p){return !p.hideGrid;});
+  $('profMarginTable').innerHTML='<tr><th>المنتج</th><th>الجملة</th><th>البيع</th><th>ربح/قطعة</th><th>الهامش</th></tr>'+
+    prods.map(function(p){
+      var c=COSTS[p.id], pr=p.price||0;
+      if(c==null)return '<tr><td>'+esc(p.name)+'</td><td colspan="4" style="color:var(--amber);font-size:12px">⚠️ أدخل سعر الجملة من ✏️</td></tr>';
+      var pu=pr-c, mg=pr?Math.round(pu/pr*100):0;
+      return '<tr><td>'+esc(p.name)+'</td><td>'+fmt(c)+'</td><td>'+fmt(pr)+'</td><td style="color:#1f9d57;font-weight:700">'+fmt(pu)+'</td><td style="font-weight:800;color:'+(mg>=0?'#1f9d57':'var(--red)')+'">'+mg+'%</td></tr>';
+    }).join('');
 }
 
 /* ══════════ أدوات ══════════ */
