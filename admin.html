@@ -194,6 +194,9 @@ input,select,textarea,button{font-family:inherit}
 .prof-table td{padding:11px 13px;border-top:1px solid var(--line);color:var(--ink);white-space:nowrap}
 .prof-table tr:hover td{background:var(--paper)}
 .prof-note{font-size:12px;color:var(--ink-m);line-height:1.7;margin-top:14px;background:var(--cream);padding:12px 15px;border-radius:11px}
+.cost-inline{width:92px;padding:7px 9px;border:1.5px solid var(--gold);border-radius:8px;font-size:13px;font-weight:700;background:#fffdf7;text-align:center;color:var(--ink)}
+.cost-inline:focus{outline:none;border-color:var(--teal);background:#fff}
+.cost-inline::placeholder{color:var(--ink-m);font-weight:400;font-size:11px}
 .orow-actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center;border-top:1px dashed var(--line);padding-top:10px}
 .orow-actions select{padding:8px 10px;border:1px solid var(--line);border-radius:9px;font-size:12.5px;background:var(--paper);font-weight:600}
 .chk-lg{width:18px;height:18px;accent-color:var(--teal);cursor:pointer;flex:0 0 auto}
@@ -318,7 +321,7 @@ input,select,textarea,button{font-family:inherit}
     <div class="prof-table-wrap"><table class="prof-table" id="profTopTable"></table></div>
     <h3 class="prof-h">📈 هامش الربح لكل منتج</h3>
     <div class="prof-table-wrap"><table class="prof-table" id="profMarginTable"></table></div>
-    <p class="prof-note">💡 الربح الصافي = الإيراد − سعر الجملة − تكلفة التوصيل. يُحسب من الطلبات المعلّمة «مشترٍ» فقط. أدخل «سعر الجملة» لكل منتج من زر ✏️ في تبويب المنتجات لتدقيق الأرباح. أسعار الجملة سرّية ولا تظهر للزبائن إطلاقاً.</p>
+    <p class="prof-note">💡 <b>أدخل «سعر الجملة» مباشرةً في الجدول أعلاه</b> — اكتب تكلفتك في الخانة الصفراء لكل منتج وستُحفظ فوراً وتُحسب الأرباح تلقائياً. الربح الصافي = الإيراد − سعر الجملة − تكلفة التوصيل (من الطلبات المعلّمة «مشترٍ» فقط). أسعار الجملة سرّية ولا تظهر للزبائن إطلاقاً.</p>
   </div>
 </div>
 
@@ -1015,13 +1018,25 @@ function renderProfits(){
     (top.length?top.map(function(r){return '<tr><td>'+esc(r.name)+'</td><td>'+r.qty+'</td><td>'+fmt(r.rev)+'</td><td style="color:#1f9d57;font-weight:700">'+fmt(r.prof)+'</td></tr>';}).join(''):'<tr><td colspan="4" style="text-align:center;color:var(--ink-m);padding:14px">لا مبيعات في هذه الفترة</td></tr>');
   // هامش الربح لكل منتج
   var prods=ALL.filter(function(p){return !p.hideGrid;});
-  $('profMarginTable').innerHTML='<tr><th>المنتج</th><th>الجملة</th><th>البيع</th><th>ربح/قطعة</th><th>الهامش</th></tr>'+
+  $('profMarginTable').innerHTML='<tr><th>المنتج</th><th>سعر الجملة ✏️</th><th>البيع</th><th>ربح/قطعة</th><th>الهامش</th></tr>'+
     prods.map(function(p){
       var c=COSTS[p.id], pr=p.price||0;
-      if(c==null)return '<tr><td>'+esc(p.name)+'</td><td colspan="4" style="color:var(--amber);font-size:12px">⚠️ أدخل سعر الجملة من ✏️</td></tr>';
+      var ci='<input type="number" inputmode="numeric" class="cost-inline" value="'+(c!=null?c:'')+'" placeholder="اكتب هنا" onchange="saveCostInline(\''+esc(p.id)+'\',this.value)">';
+      if(c==null)return '<tr><td>'+esc(p.name)+'</td><td>'+ci+'</td><td>'+fmt(pr)+'</td><td colspan="2" style="color:var(--amber);font-size:11.5px">⬅ اكتب تكلفتك</td></tr>';
       var pu=pr-c, mg=pr?Math.round(pu/pr*100):0;
-      return '<tr><td>'+esc(p.name)+'</td><td>'+fmt(c)+'</td><td>'+fmt(pr)+'</td><td style="color:#1f9d57;font-weight:700">'+fmt(pu)+'</td><td style="font-weight:800;color:'+(mg>=0?'#1f9d57':'var(--red)')+'">'+mg+'%</td></tr>';
+      return '<tr><td>'+esc(p.name)+'</td><td>'+ci+'</td><td>'+fmt(pr)+'</td><td style="color:#1f9d57;font-weight:700">'+fmt(pu)+'</td><td style="font-weight:800;color:'+(mg>=0?'#1f9d57':'var(--red)')+'">'+mg+'%</td></tr>';
     }).join('');
+}
+async function saveCostInline(id,val){
+  var c=parseInt(val,10);
+  if(val===''||isNaN(c)||c<0){ return; }
+  try{
+    const {error}=await sb.from('product_costs').upsert({id:id,cost:c,updated_at:new Date().toISOString()},{onConflict:'id'});
+    if(error){ toast('خطأ الحفظ: '+error.message,'err'); return; }
+    COSTS[id]=c;
+    toast('حُفظ سعر الجملة ✓','ok');
+    renderProfits();
+  }catch(e){ toast('تعذّر الحفظ — تحقّق من تشغيل profits-setup.sql','err'); }
 }
 
 /* ══════════ أدوات ══════════ */
