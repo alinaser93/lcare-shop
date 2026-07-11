@@ -483,13 +483,17 @@ async function toggleVisible(id,val){
 
 /* ══════════ المحرّر ══════════ */
 function openEditor(id){
-  editing = id ? JSON.parse(JSON.stringify(ALL.find(p=>p.id===id))) : blankProduct();
-  curImages = (editing.images||[]).slice();
-  $('edTitle').textContent = id ? ('تعديل: '+(editing.name||editing.id)) : 'منتج جديد';
-  $('edBody').innerHTML = editorHTML(editing, !!id);
-  bindDyn();
-  $('ov').classList.add('on'); $('editor').classList.add('on');
-  document.body.style.overflow='hidden';
+  try{
+    var src = id ? ALL.find(function(p){return p.id===id;}) : null;
+    if(id && !src){ toast('لم يُعثر على المنتج — حدّث الصفحة','err'); return; }
+    editing = id ? JSON.parse(JSON.stringify(src)) : blankProduct();
+    curImages = (editing.images||[]).slice();
+    $('edTitle').textContent = id ? ('تعديل: '+(editing.name||editing.id)) : 'منتج جديد';
+    $('edBody').innerHTML = editorHTML(editing, !!id);
+    bindDyn();
+    $('ov').classList.add('on'); $('editor').classList.add('on');
+    document.body.style.overflow='hidden';
+  }catch(e){ toast('تعذّر فتح المحرّر: '+((e&&e.message)||'خطأ غير معروف'),'err'); }
 }
 function closeEditor(){ $('ov').classList.remove('on'); $('editor').classList.remove('on'); document.body.style.overflow=''; editing=null; }
 function blankProduct(){ return {id:'',cat:'',catName:'',name:'',price:0,old:null,was:null,bulkTiers:[],box:null,gift:false,giftWith:'',giftLabel:'',soon:false,original:false,region:'',noWarranty:false,warrantyNote:'',rating:null,reviews:null,fomo:'',short:'',tag:'',cta:'',desc:'',who:'',why:'',how:'',feats:[],videos:[],rel:[],images:[],addQty:null,addonNote:'',hideGrid:false,sortOrder:(ALL.length+1)*10,visible:true}; }
