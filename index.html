@@ -1853,12 +1853,13 @@ function sensorQty(){return cart.reduce(function(s,i){var p=PRODUCTS.find(functi
 function itemQty(id){var i=cart.find(function(x){return x.id===id;});return i?i.qty:0;}
 function giftQty(p){if(!p||!p.gift)return 0;if(p.id==='alcohol-gift'){return sensorQty();}if(p.giftWith==='sensor')return sensorQty();return itemQty(p.giftWith);}
 const ADDON_GROUPS=[
-  {icon:'🧰',title:'أكمل عُدّة حساسك',sub:'يُنصح بها مع كل حساس — تثبيت أطول وتعقيم آمن',show:function(){return cartHasCat('cgm');},items:['alcohol-gift','skintac-trial']}
+  {icon:'🧰',title:'أكمل عُدّة حساسك',sub:'يُنصح بها مع كل حساس — تثبيت أطول وتعقيم آمن',show:function(){return cartHasCat('cgm');},items:['alcohol-gift','skintac-trial','nepia-addon']}
 ]
 const ADDON_IC={
   'skintac-trial':'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>',
   'alcohol-gift':'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><line x1="12" y1="22" x2="12" y2="7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/></svg>'
 };
+ADDON_IC['nepia-addon']='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3.5"/></svg>';
 ADDON_IC['strips-gift']='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2" width="6" height="20" rx="1"/><path d="M9 7h6"/></svg>';
 ADDON_IC['glucometer-combo']='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2"/><rect x="8" y="5" width="8" height="5" rx="1"/><circle cx="9" cy="14" r=".6"/><circle cx="12" cy="14" r=".6"/><circle cx="15" cy="14" r=".6"/></svg>';
 function cartHasSensor(){return cart.some(function(i){var p=PRODUCTS.find(function(x){return x.id===i.id;});return p&&p.cat==='cgm';});}
