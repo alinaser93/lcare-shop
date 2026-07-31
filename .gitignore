@@ -1,0 +1,8 @@
+# أسرار محلية — لا تُرفع أبدًا (المستودع عام)
+.env
+.env.*
+.claude/settings.local.json
+
+node_modules/
+.netlify/
+.DS_Store
